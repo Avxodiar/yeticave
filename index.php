@@ -3,70 +3,9 @@ $is_auth = (bool) rand(0, 1);
 
 $user_name = 'Константин';
 $user_avatar = 'img/user.jpg';
-$categories = array('Доски и лыжи', 'Крепления', 'Ботинки', 'Одежда', 'Инструменты', 'Разное');
-$lots = array(
-    array(
-        'name' => '2014 Rossignol District Snowboard',
-        'category' => 'Доски и лыжи',
-        'price' => 10999,
-        'foto' => 'img/lot-1.jpg'
-    ),
-    array(
-        'name' => 'DC Ply Mens 2016/2017 Snowboard',
-        'category' => 'Доски и лыжи',
-        'price' => 159999,
-        'foto' => 'img/lot-2.jpg'),
-    array(
-        'name' => 'Крепления Union Conact Pro 2015 года размер L/XL',
-        'category' => 'Крепления',
-        'price' => 8000,
-        'foto' => 'img/lot-3.jpg'
-    ),
-    array(
-        'name' => 'Ботинки для сноуборда DC Mutiny Charocal',
-        'category' => 'Ботинки',
-        'price' => 10999,
-        'foto' => 'img/lot-4.jpg'
-    ),
-    array(
-        'name' => 'Куртка для сноуборда DC Mutiny Charocal',
-        'category' => 'Одежда',
-        'price' => 7500,
-        'foto' => 'img/lot-5.jpg'
-    ),
-    array(
-        'name' => 'Маска Oakley Canopy',
-        'category' => 'Разное',
-        'price' => 5400,
-        'foto' => 'img/lot-6.jpg'
-    )
-);
 
-/**
- * Форматирование суммы лота в соответсвии со спецификацией:
- * {
- *   Функция принимает один аргумент - целое число.
- *   Функция возвращает результат - отформатированную сумму вместе со знаком рубля.
- *   Как должна работать функция:
- *   1. Округлить число до целого использую функцию ceil()
- *   2. Если переданное число меньше 1000, то оставить как есть
- *   3. Если число больше 1000, то отделить пробелом 3 последних цифры от остальной части суммы
- *   Пример: заменить 54999 на 54 999
- *   4. Добавить к получившейся строке пробел и знак рубля.
- * }
- * @todo Уточнить TЗ - округление целого числа; не указаны действия если число ровно 1000 и хранение элементов вёрстки!
- *
- * @param  int    $price - стоимость лота, целое число
- * @return string
- */
-function priceFormat(int $price) : string
-{
-    $price = ceil($price);
-    if($price > 1000) {
-        $price = number_format($price, 0, '', ' ');
-    }
-    return $price . ' <b class="rub">р</b>';
-}
+require_once 'src/func.php';
+require_once 'src/data.php';
 ?>
 <!DOCTYPE html>
 <html lang="ru">
