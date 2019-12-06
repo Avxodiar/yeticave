@@ -41,7 +41,7 @@
                             <span class="lot__cost"><?=$lot['price'];?></span>
                         </div>
                         <div class="lot__timer timer">
-
+                            <?=$lot['leftTime'];?>
                         </div>
                     </div>
                 </div>

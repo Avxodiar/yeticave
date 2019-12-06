@@ -7,8 +7,8 @@
  * @return false|string
  */
 function getTemplate(string $template, array $data) {
-    $pathTemplate = __DIR__. '/../templates/' . $template;
-    if(empty($template || !file_exists($pathTemplate))) {
+    $pathTemplate = TEMPLATE_PATH . $template;
+    if(empty($template) || !file_exists($pathTemplate)) {
         return '';
     }
 
@@ -27,7 +27,6 @@ function getTemplate(string $template, array $data) {
  * @return array
  */
 function checkLots(array $data) {
-    $pathImages = __DIR__. '/../img/';
     foreach ($data as $key => $lot) {
         foreach ($lot as $param => $value) {
             switch ($param) {
@@ -40,9 +39,10 @@ function checkLots(array $data) {
                     break;
                 case 'foto':
                     $url = pathinfo($value);
-                    $data[$key][$param] = file_exists($pathImages . $url['basename']) ? $value : '';
+                    $data[$key][$param] = file_exists(IMG_PATH . $url['basename']) ? $value : '';
             }
         }
+        $data[$key]['leftTime'] = getLeftMidnight();
     }
     return $data;
 }
@@ -69,4 +69,15 @@ function priceFormat($price) {
         $priceFormat = number_format($priceFormat, 0, '', ' ');
     }
     return $priceFormat . ' <b class="rub">р</b>';
+}
+
+/**
+ * Сколько осталось времени до начала новых суток
+ * @return string - формат вывода "Ч:М"
+ */
+function getLeftMidnight() {
+    $midnight = mktime(0, 0, 0, date('n'), date('j') + 1, date('Y'));
+    $left = $midnight - time();
+
+    return floor($left/3600) . ':'. floor($left%3600/60);
 }
