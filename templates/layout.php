@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title><?=$pageName;?></title>
+    <title><?=$pageTitle;?></title>
     <link href="css/normalize.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
 </head>
@@ -11,7 +11,7 @@
 <header class="main-header">
     <div class="main-header__container container">
         <h1 class="visually-hidden">YetiCave</h1>
-        <a class="main-header__logo">
+        <a class="main-header__logo" <?=$logoLink?>>
             <img src="img/logo.svg" width="160" height="39" alt="Логотип компании YetiCave">
         </a>
         <form class="main-header__search" method="get" action="https://echo.htmlacademy.ru">
@@ -44,23 +44,21 @@
     </div>
 </header>
 
+<?php
+if(!MAIN_PAGE) {
+    include 'templates/nav.php';
+}
+?>
+
 <main class="container">
 <?=$mainContainer;?>
 </main>
 
 <footer class="main-footer">
-    <nav class="nav">
-        <ul class="nav__list container">
-            <?php foreach ($categories as $catName): ?>
-            <li class="nav__item">
-                <a href="all-lots.html"><?=$catName?></a>
-            </li>
-            <?php endforeach; ?>
-        </ul>
-    </nav>
+    <?php include "templates/nav.php";?>
     <div class="main-footer__bottom container">
         <div class="main-footer__copyright">
-            <p>© 2018, YetiCave</p>
+            <p>© 2018-<?=date('Y');?>, YetiCave</p>
             <p>Интернет-аукцион сноубордического и горнолыжного снаряжения</p>
         </div>
         <div class="main-footer__social social">
