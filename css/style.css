@@ -727,6 +727,8 @@ h2 {
 
 .form {
   padding-top: 51px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form h2 {
