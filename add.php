@@ -1,25 +1,6 @@
 <?php
 require_once 'src/config.php';
 require_once 'src/functions.php';
-require_once 'src/data.php';
-
-/*
-1 Проверить, что форма была отправлена
-    если нет то показать пустую форму
-2 Получить все данные из формы
-3 Проверить их корректность – выполнить валидацию
-4 Обработать данные: сохранить в БД, отправить, показать…
-5 Показать пользователю результат или отправить на другую страницу
-*/
-function hasError() {
-    global $errors;
-    return (count($errors));
-}
-
-function checkError($field) {
-    global $errors;
-    return !empty($errors[$field]) ? 'form__item--invalid' : '';
-}
 
 $arRes = [];
 $errors = [];
@@ -90,6 +71,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $arRes['lot-image'] = '';
 }
 
-$indexContent = getTemplate('add.php', ['categories' => $categories, 'arRes' => $arRes, 'errors' => $errors]);
+$indexContent = getTemplate(
+    'add.php',
+    [
+        'categories' => $categories,
+        'arRes' => $arRes,
+        'errors' => $errors
+    ]
+);
 
 includeTemplate('Добавление лота', $indexContent);

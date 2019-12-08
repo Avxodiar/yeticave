@@ -15,9 +15,4 @@ define('MAIN_PAGE', $mainPage);
 
 $logoLink = MAIN_PAGE ? '' : ' href="/"';
 
-//@TODO Вынести в модуль регистрации
-$User = [
-  'isAuth' => (bool) rand(0, 1),
-  'name' => 'Константин',
-  'avatar' =>  'img/user.jpg'
-];
+session_start();

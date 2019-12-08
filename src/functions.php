@@ -1,5 +1,11 @@
 <?php
 
+use function user\isAuth;
+
+require_once 'data/data.php';
+require_once 'data/userdata.php';
+require_once 'src/user.php';
+
 /**
  * Подключение основного шаблона
  * @param $title
@@ -13,9 +19,9 @@ function includeTemplate($title, $content) {
         'layout.php', [
             'pageTitle' => $title,
             'logoLink' => $logoLink,
-            'isAuth' => $User['isAuth'],
-            'userName' => $User['name'],
-            'userAvatar' => $User['avatar'],
+            'isAuth' => user\isAuth(),
+            'userName' => user\getName(),
+            'userAvatar' => user\getAvatar(),
             'mainContainer' => $content,
             'categories' => $categories
             ]
@@ -28,6 +34,7 @@ function includeTemplate($title, $content) {
  * @param string $template - название файла шаблона из каталога templates
  * @param array  $data     - массив данных для вывода в шаблоне
  * @return false|string
+ * @todo экранирование выводимых данных!
  */
 function getTemplate(string $template, array $data) {
     $pathTemplate = TEMPLATE_PATH . $template;
@@ -138,4 +145,24 @@ function getLeftMidnight() {
     $left = $midnight - time();
 
     return gmdate('H:i', $left);
+}
+
+/**
+ * Имелись ли ошибки при обработке формы
+ * @return bool
+ */
+function hasError() {
+    global $errors;
+    return (bool)count($errors);
+}
+
+/**
+ * Проверка наличия ошибки поля при обработке формы
+ * возвращает класс для отображения поля ошибки
+ * @param $field - поле формы
+ * @return string
+ */
+function checkError($field) {
+    global $errors;
+    return !empty($errors[$field]) ? 'form__item--invalid' : '';
 }

@@ -1,7 +1,6 @@
 <?php
 require_once 'src/config.php';
 require_once 'src/functions.php';
-require_once 'src/data.php';
 
 $id = (int)$_GET['id'];
 if(!isset($lots[$id])) {
