@@ -22,6 +22,7 @@
                         Мин. ставка <span><?=$lot['minPrice'];?></span>
                     </div>
                 </div>
+                <?php if(user\isAuth()): ?>
                 <form class="lot-item__form" action="https://echo.htmlacademy.ru" method="post">
                     <p class="lot-item__form-item">
                         <label for="cost">Ваша ставка</label>
@@ -29,6 +30,7 @@
                     </p>
                     <button type="submit" class="button">Сделать ставку</button>
                 </form>
+                <?php endif;?>
             </div>
             <?php if(count($bets)): ?>
             <div class="history">

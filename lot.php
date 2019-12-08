@@ -2,10 +2,9 @@
 require_once 'src/config.php';
 require_once 'src/functions.php';
 
-$id = (int)$_GET['id'];
-if(!isset($lots[$id])) {
-    http_response_code(404);
-    die;
+$id = $_GET['id'] ?? 0;
+if(!$id || !isset($lots[$id])) {
+    errorPage(404);
 }
 
 // проверяем выбранный лот

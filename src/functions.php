@@ -50,6 +50,13 @@ function getTemplate(string $template, array $data) {
     return ob_get_clean();
 }
 
+function errorPage($code) {
+    http_response_code($code);
+    $_SERVER['REDIRECT_STATUS'] = $code;
+    require_once ROOT. '/error.php';
+    exit();
+}
+
 /**
  * Валидация данных по лотам
  * @todo Добавить изображение лота по умолчанию, если указанное изображение отсутсвует
