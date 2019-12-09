@@ -178,12 +178,12 @@ function addLotHistory($id) {
     $history[] = $id;
     $history = array_unique($history, SORT_NUMERIC);
 
-    setcookie('lot-history', serialize($history), time() + 7 * 86400);
+    setcookie('lot-history', json_encode($history), time() + 7 * 86400);
 }
 
 function getLotHistory() {
     $history = $_COOKIE['lot-history'] ?? [];
 
-    $history = empty($history) ? [] : unserialize($history, ['allowed_classes' => false]);
+    $history = empty($history) ? [] : json_decode($history, false);
     return $history;
 }

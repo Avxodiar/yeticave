@@ -8,7 +8,7 @@ define('TEMPLATE_PATH', ROOT. '/templates/');
 // путь до каталога изображений
 define('IMG_PATH', ROOT. '/img/');
 // каталог загрузки
-define('USER_UPLOAD_DIR', '/upload/user_lots/');
+define('USER_UPLOAD_DIR', '/upload/lots/');
 
 $mainPage = ($_SERVER['REQUEST_URI'] === '/' || $_SERVER['REQUEST_URI'] === '/index.php');
 define('MAIN_PAGE', $mainPage);

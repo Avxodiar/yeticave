@@ -250,12 +250,36 @@ h2 {
   font-weight: 400;
 }
 
+.user-menu__logged .user-menu_name {
+  display: block;
+  font-weight: 700;
+}
+
 .user-menu__logged a:hover {
   text-decoration: underline;
 }
 
 .user-menu__logged a:active {
   color: #727b7f;
+}
+
+/* Профайл*/
+.profile {
+  display: flex;
+  margin: 5px;
+  box-sizing: border-box;
+}
+.profile .avatar {
+  margin-right: 20px;
+  width: 200px;
+  height: 200px;
+}
+.profile .info {
+  margin-top: 0;
+  font-size: 18px;
+}
+.profile .info h3 {
+  margin-top: 0;
 }
 
 /* Футер */

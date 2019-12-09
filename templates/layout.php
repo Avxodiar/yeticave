@@ -29,7 +29,7 @@
                 <img src="<?=$userAvatar?>" width="40" height="40" alt="Пользователь">
             </div>
             <div class="user-menu__logged">
-                <p><?=$userName?></p>
+                <a class="user-menu_name" href="/profile.php"><?=$userName?></a>
                 <a href="/logout.php">Выход</a>
             </div>
         <?php else: ?>
