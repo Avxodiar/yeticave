@@ -21,12 +21,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             switch ($field) {
                 case 'lot-name':
-                    if ($value != $_POST[$field]) {
+                    if ($value !== $_POST[$field]) {
                         $errors[$field] = 'Некорректное наименование';
                     }
                     break;
                 case 'message':
-                    if ($value != $_POST[$field]) {
+                    if ($value !== $_POST[$field]) {
                         $errors[$field] = 'Некорректное описание';
                     }
                     break;
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     break;
                 case 'category':
-                    if(!in_array($value, $categories)) {
+                    if(!in_array($value, $categories, false)) {
                         $errors[$field] = 'Указан не верный раздел';
                     }
                     break;

@@ -38,14 +38,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if(user\isAuth()) {
-    $indexContent = getTemplate(
+    $content = getTemplate(
         'welcome.php',
         [
             'message' => 'Добро пожаловать, ' . user\getName() . '!'
         ]
     );
 } else {
-    $indexContent = getTemplate(
+    $content = getTemplate(
         'login.php',
         [
             'email' => $email,
@@ -54,4 +54,4 @@ if(user\isAuth()) {
     );
 }
 
-includeTemplate('Авторизация', $indexContent);
+includeTemplate('Авторизация', $content);

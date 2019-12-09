@@ -4,6 +4,7 @@
         <p><?=$message?></p>
     </header>
 
+    <?php if ($needAuth): ?>
     <a class="main-header__add-lot button" href="/login.php">Авторизация</a>
-
+    <?php endif; ?>
 </div>

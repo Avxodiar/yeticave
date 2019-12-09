@@ -2,16 +2,16 @@
 require_once 'src/config.php';
 require_once 'src/functions.php';
 
-if(user\isAuth()) {
-    $indexContent = getTemplate(
-        'welcome.php',
-        [
-            'message' => 'Вы авторизованы. Хотите выйти?'
-        ]
-    );
-} else {
+if(!user\isAuth()) {
     header('Location: /login.php');
     exit();
 }
 
-includeTemplate('Авторизация', $indexContent);
+$content = getTemplate(
+    'welcome.php',
+    [
+        'message' => 'Вы авторизованы. Хотите выйти?'
+    ]
+);
+
+includeTemplate('Авторизация', $content);

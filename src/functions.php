@@ -1,7 +1,4 @@
 <?php
-
-use function user\isAuth;
-
 require_once 'data/data.php';
 require_once 'data/userdata.php';
 require_once 'src/user.php';
@@ -12,7 +9,7 @@ require_once 'src/user.php';
  * @param $content
  */
 function includeTemplate($title, $content) {
-    global $User, $categories, $logoLink;
+    global $categories, $logoLink;
 
     print(
         getTemplate(
@@ -172,4 +169,21 @@ function hasError() {
 function checkError($field) {
     global $errors;
     return !empty($errors[$field]) ? 'form__item--invalid' : '';
+}
+
+
+function addLotHistory($id) {
+    $history = getLotHistory();
+
+    $history[] = $id;
+    $history = array_unique($history, SORT_NUMERIC);
+
+    setcookie('lot-history', serialize($history), time() + 7 * 86400);
+}
+
+function getLotHistory() {
+    $history = $_COOKIE['lot-history'] ?? [];
+
+    $history = empty($history) ? [] : unserialize($history, ['allowed_classes' => false]);
+    return $history;
 }

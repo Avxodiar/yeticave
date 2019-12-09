@@ -14,12 +14,13 @@ $id = $id ?? 404;
 // Все 5xx ошибки показываем как 500
 $id = $id > 500 ? 500 : $id;
 
-$indexContent = getTemplate(
+$content = getTemplate(
     'error.php',
     [
         'code'  => $id,
-        'message' => HTTP_STATUS_CODE[$id]
+        'message' => HTTP_STATUS_CODE[$id],
+        'needAuth' => ($id === 403)
     ]
 );
 
-includeTemplate('Ошибка', $indexContent);
+includeTemplate('Ошибка '.$id, $content);
