@@ -7,11 +7,19 @@ if(!user\isAuth()) {
     exit();
 }
 
+if (isset($_GET['logout']) && $_GET['logout'] === 'true') {
+    user\logout();
+    header('Location: /');
+    exit();
+}
+
 $content = getTemplate(
     'welcome.php',
     [
-        'message' => 'Вы авторизованы. Хотите выйти?'
+        'message' => 'Вы авторизованы. Хотите выйти?',
+        'button' => 'Выйти',
+        'buttonUrl' => '/logout.php?logout=true'
     ]
 );
 
-includeTemplate('Авторизация', $content);
+includeTemplate('Завершение сеанса', $content);

@@ -6,12 +6,6 @@ $email = '';
 $errors = [];
 $requiredFields = ['email', 'password'];
 
-if (isset($_GET['login']) && $_GET['login'] === 'true') {
-    user\logout();
-    header('Location: /');
-    exit();
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     foreach ($requiredFields as $field) {
@@ -41,7 +35,9 @@ if(user\isAuth()) {
     $content = getTemplate(
         'welcome.php',
         [
-            'message' => 'Добро пожаловать, ' . user\getName() . '!'
+            'message' => 'Добро пожаловать, ' . user\getName() . '!',
+            'button' => 'Выйти',
+            'buttonUrl' => '/logout.php'
         ]
     );
 } else {
