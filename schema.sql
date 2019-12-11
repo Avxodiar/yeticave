@@ -19,23 +19,27 @@ CREATE TABLE users
     PRIMARY KEY(`id`)
 ) ENGINE = InnoDB;
 
-CREATE UNIQUE INDEX email ON users(`email`);
-
 CREATE TABLE lots
 (
     `id`          INT UNSIGNED   NOT NULL AUTO_INCREMENT,
     `active`      TINYINT(1) UNSIGNED NOT NULL DEFAULT '1',
-    `user_id`     INT UNSIGNED   NOT NULL,
     `name`        VARCHAR(255)   NOT NULL,
-    `category`    ENUM ('Доски и лыжи', 'Крепления', 'Ботинки', 'Одежда', 'Инструменты', 'Разное')  NOT NULL,
-    `image`       VARCHAR(255)   NOT NULL,
-    `data_start`  DATETIME       NOT NULL,
+    `category_id` INT UNSIGNED   NOT NULL,
+    `user_id`     INT UNSIGNED   NOT NULL,
+    `image_url`   VARCHAR(255)   NOT NULL,
+    `data_start`  DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `data_finish` DATETIME       NOT NULL,
     `price_start` DECIMAL(10, 0) NOT NULL,
     `price_step`  DECIMAL (10,0) NOT NULL,
     `like_count`  INT UNSIGNED  DEFAULT '0',
     `winner_id`   INT UNSIGNED  DEFAULT NULL,
     `description` TEXT(2048),
+    PRIMARY KEY(`id`)
+) ENGINE = InnoDB;
+
+CREATE TABLE categories (
+    `id`          INT UNSIGNED   NOT NULL AUTO_INCREMENT,
+    `name`        VARCHAR(255)   NOT NULL,
     PRIMARY KEY(`id`)
 ) ENGINE = InnoDB;
 
@@ -47,3 +51,6 @@ CREATE TABLE bids (
   `sum`         DECIMAL(10,0) NOT NULL,
   PRIMARY KEY(`id`)
 ) ENGINE = InnoDB;
+
+CREATE UNIQUE INDEX `email` ON users(`email`);
+CREATE UNIQUE INDEX `name` ON categories(`name`);
