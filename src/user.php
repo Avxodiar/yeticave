@@ -1,11 +1,7 @@
 <?php
 namespace user;
 
-function checkEmail(string $email) {
-    return filter_var($email, FILTER_VALIDATE_EMAIL);
-}
-
-function searchUser(string $email) {
+function searchByEmail(string $email) {
     global $users;
 
     $result = null;

@@ -61,10 +61,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (strpos($file_type, 'image') === false) {
                 $errors['lot-image'] = 'Может быть выбран только изображение!';
             } else {
-                $file_url = USER_UPLOAD_DIR . $file_name;
+                $file_url = LOTS_UPLOAD_DIR . $file_name;
                 move_uploaded_file(
                     $upload['tmp_name'],
-                    ROOT. USER_UPLOAD_DIR . $file_name
+                    ROOT. LOTS_UPLOAD_DIR . $file_name
                 );
                 $arRes['lot-image'] = $file_url;
             }

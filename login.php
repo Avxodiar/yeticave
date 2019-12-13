@@ -2,6 +2,8 @@
 require_once 'src/config.php';
 require_once 'src/functions.php';
 
+use function yeticave\form\isValidMail;
+
 $email = '';
 $errors = [];
 $requiredFields = ['email', 'password'];
@@ -9,17 +11,19 @@ $requiredFields = ['email', 'password'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     foreach ($requiredFields as $field) {
-        if (empty($field)) {
+        $value = htmlspecialchars($_POST[$field]);
+        $arRes[$field] = $value;
+        if (empty($value)) {
             $errors[$field] = 'Поле не заполнено';
         }
     }
 
     if (!count($errors)) {
 
-        if(!user\checkEmail($_POST['email'])) {
+        if(!isValidMail($_POST['email'])) {
             $errors['email'] = 'Указан не корректный E-mail';
         } else {
-            $arUser = user\searchUser($_POST['email']);
+            $arUser = user\searchByEmail($_POST['email']);
             if(!empty($arUser) && user\checkPassword($_POST['password'], $arUser['password'])) {
                 user\auth($arUser['id']);
             }

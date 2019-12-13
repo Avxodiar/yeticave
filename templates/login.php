@@ -2,7 +2,7 @@
     <h2>Вход</h2>
     <div class="form__item <?=checkError('email')?>">
       <label for="email">E-mail*</label>
-      <input id="email" type="text" name="email" placeholder="Введите e-mail" required  value="<?=$email?>">
+      <input id="email" type="text" name="email" placeholder="Введите e-mail" required value="<?=$email?>">
       <span class="form__error"><?=$errors['email']?></span>
     </div>
     <div class="form__item form__item--last <?=checkError('password')?>">
