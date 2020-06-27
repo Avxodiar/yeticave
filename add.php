@@ -1,8 +1,10 @@
 <?php
-require_once 'src/config.php';
-require_once 'src/functions.php';
+require_once 'src/init.php';
 
-if(!user\isAuth()) {
+use function yeticave\user\isAuth;
+use function yeticave\file\getShortSize;
+
+if(!isAuth()) {
     errorPage(403);
 }
 
@@ -52,8 +54,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_FILES['lot-image'])) {
         $upload = $_FILES['lot-image'];
         $file_name = $upload['name'];
-        if ($upload['size'] > 2097152) {
-            $errors['lot-image'] = 'Максимальный размер файла: 2Мб';
+        if ($upload['size'] > UPLOAD_MAX_SIZE) {
+            $errors['lot-image'] = 'Максимальный размер файла: ' . getShortSize(UPLOAD_MAX_SIZE);
         } else {
             $fInfo = finfo_open(FILEINFO_MIME_TYPE);
             $file_type = finfo_file($fInfo, $upload['tmp_name']);

@@ -25,4 +25,12 @@ define('MAIN_PAGE', $mainPage);
 
 $logoLink = MAIN_PAGE ? '' : ' href="/"';
 
-session_start();
+const ADMIN_MAIL = '';
+
+const DB_CONFIG = [
+   'host' => 'yeticave',
+   'database' => 'yeticave',
+   'user' => 'root',
+   'password' => '',
+   'port' => 3306
+];

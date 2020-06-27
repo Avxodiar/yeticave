@@ -2,12 +2,13 @@
   <h2>История просмотров</h2>
 
     <?php
-    if(count($history)) {
+    if(count($history)) { ?>
+        <ul class="lots__list">
+        <?php
         foreach ($history as $lotId)
         {
             $lot = $lots[$lotId];
             ?>
-            <ul class="lots__list">
                 <li class="lots__item lot">
                     <div class="lot__image">
                         <img src="<?= $lot['pict']; ?>" width="350" height="260" alt="<?= $lot['alt']; ?>">
@@ -27,17 +28,19 @@
                         </div>
                     </div>
                 </li>
-            </ul>
-
-            <ul class="pagination-list">
-                <li class="pagination-item pagination-item-prev"><a>Назад</a></li>
-                <li class="pagination-item pagination-item-active"><a>1</a></li>
-                <li class="pagination-item"><a href="#">2</a></li>
-                <li class="pagination-item"><a href="#">3</a></li>
-                <li class="pagination-item"><a href="#">4</a></li>
-                <li class="pagination-item pagination-item-next"><a href="#">Вперед</a></li>
-            </ul>
-        <?php }
+        <?php
+        }
+        ?>
+        </ul>
+        <ul class="pagination-list">
+            <li class="pagination-item pagination-item-prev"><a>Назад</a></li>
+            <li class="pagination-item pagination-item-active"><a>1</a></li>
+            <li class="pagination-item"><a href="#">2</a></li>
+            <li class="pagination-item"><a href="#">3</a></li>
+            <li class="pagination-item"><a href="#">4</a></li>
+            <li class="pagination-item pagination-item-next"><a href="#">Вперед</a></li>
+        </ul>
+        <?php
     } else { ?>
         <p>Список просмотров пуст</p>
     <?php

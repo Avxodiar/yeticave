@@ -1,6 +1,5 @@
 <?php
-require_once 'src/config.php';
-require_once 'src/functions.php';
+require_once 'src/init.php';
 
 $content = getTemplate('index.php', ['lots' => checkLots($lots)]);
 

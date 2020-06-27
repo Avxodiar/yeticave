@@ -1,14 +1,16 @@
 <?php
-require_once 'src/config.php';
-require_once 'src/functions.php';
+require_once 'src/init.php';
 
-if(!user\isAuth()) {
+use function yeticave\user\isAuth;
+use function yeticave\user\logout;
+
+if(!isAuth()) {
     header('Location: /login.php');
     exit();
 }
 
 if (isset($_GET['logout']) && $_GET['logout'] === 'true') {
-    user\logout();
+    logout();
     header('Location: /');
     exit();
 }

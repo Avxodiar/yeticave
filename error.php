@@ -1,11 +1,10 @@
 <?php
-require_once 'src/config.php';
-require_once 'src/functions.php';
+require_once 'src/init.php';
 
 const HTTP_STATUS_CODE = [
     403 => 'У вас нет прав для просмотра этой страницы.',
     404 => 'Страница не найдена.',
-    500 => 'Техническое обслуживание.'
+    500 => 'Внутренняя ошибка сервера. Выполняется техническое обслуживание. Попробуйте позже.'
 ];
 
 $id = (int)$_SERVER['REDIRECT_STATUS'];

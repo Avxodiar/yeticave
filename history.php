@@ -1,8 +1,9 @@
 <?php
-require_once 'src/config.php';
-require_once 'src/functions.php';
+require_once 'src/init.php';
 
-if(!user\isAuth()) {
+use function yeticave\user\isAuth;
+
+if(!isAuth()) {
     errorPage(403);
 }
 

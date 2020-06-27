@@ -1,8 +1,14 @@
 <?php
-require_once 'src/config.php';
-require_once 'src/functions.php';
+require_once 'src/init.php';
+require_once 'src/form.php';
+require_once 'src/database.php';
 
 use function yeticave\form\isValidMail;
+use function yeticave\user\searchByEmail;
+use function yeticave\user\checkPassword;
+use function yeticave\user\auth;
+use function yeticave\user\isAuth;
+use function yeticave\user\getName;
 
 $email = '';
 $errors = [];
@@ -23,9 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if(!isValidMail($_POST['email'])) {
             $errors['email'] = 'Указан не корректный E-mail';
         } else {
-            $arUser = user\searchByEmail($_POST['email']);
-            if(!empty($arUser) && user\checkPassword($_POST['password'], $arUser['password'])) {
-                user\auth($arUser['id']);
+            $arUser = searchByEmail($_POST['email']);
+            if(!empty($arUser) && checkPassword($_POST['password'], $arUser['password'])) {
+                auth($arUser['id'], $arUser);
             }
             $errors['password'] = 'Введите пароль';
             $errors['form'] = 'Указан неверный логин или пароль';
@@ -35,21 +41,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     unset($arRes);
 }
 
-if(user\isAuth()) {
+if(isAuth()) {
     $content = getTemplate(
         'welcome.php',
         [
-            'message' => 'Добро пожаловать, ' . user\getName() . '!',
+            'message' => 'Добро пожаловать, ' . getName() . '!',
             'button' => 'Выйти',
             'buttonUrl' => '/logout.php'
         ]
     );
 } else {
+    // После регистрации требуется показать сообщение над формой «Теперь вы можете войти, используя свой email и пароль».
+    $fromRegistration = (isset($_GET['registration']) && $_GET['registration'] === 'success');
     $content = getTemplate(
         'login.php',
         [
             'email' => $email,
-            'errors' => $errors
+            'errors' => $errors,
+            'message' => ($fromRegistration) ? 'Теперь вы можете войти, используя свой email и пароль' : ''
         ]
     );
 }

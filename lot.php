@@ -1,6 +1,7 @@
 <?php
-require_once 'src/config.php';
-require_once 'src/functions.php';
+require_once 'src/init.php';
+
+use function yeticave\user\isAuth;
 
 $id = $_GET['id'] ?? -1;
 if($id < 0 || !isset($lots[$id])) {
@@ -12,7 +13,7 @@ $lot = $lots[$id];
 $lot = current(checkLots([$lot]));
 
 // добавляем лот в список просмотренных для авторизованных пользователей
-if(user\isAuth()) {
+if(isAuth()) {
     addLotHistory($id);
 }
 

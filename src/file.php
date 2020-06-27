@@ -61,7 +61,7 @@ function checkDir(string $dir) {
 }
 
 /**
- * Загрузка файла из форме
+ * Загрузка файла из формы
  * @param array  $upload - массив полученный из POST для input[type=file]
  * @param string $dir - каталог для загрузки файлов
  * @return array
@@ -91,6 +91,11 @@ function upload(array $upload, string $dir) {
             $error = $err;
         } else {
             $file_name = $upload['name'];
+            //переименование файла если файл с таким именем уже существует
+            if(file_exists(ROOT . $dir . $file_name)) {
+                $path = pathinfo($file_name);
+                $file_name = $path['filename'] .'_'. time() .'.'. $path['extension'];
+            }
             move_uploaded_file( $upload['tmp_name'], ROOT . $dir . $file_name );
         }
     }

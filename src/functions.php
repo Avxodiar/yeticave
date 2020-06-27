@@ -1,7 +1,7 @@
 <?php
-require_once 'data/data.php';
-require_once 'data/userdata.php';
-require_once 'src/user.php';
+use function yeticave\user\isAuth;
+use function yeticave\user\getName;
+use function yeticave\user\getAvatar;
 
 /**
  * Подключение основного шаблона
@@ -16,9 +16,9 @@ function includeTemplate($title, $content) {
         'layout.php', [
             'pageTitle' => $title,
             'logoLink' => $logoLink,
-            'isAuth' => user\isAuth(),
-            'userName' => user\getName(),
-            'userAvatar' => user\getAvatar(),
+            'isAuth' => isAuth(),
+            'userName' => getName(),
+            'userAvatar' => getAvatar(),
             'mainContainer' => $content,
             'categories' => $categories
             ]
@@ -39,6 +39,7 @@ function getTemplate(string $template, array $data) {
         return '';
     }
 
+    $data['isAuth'] = isAuth();
     extract($data, EXTR_OVERWRITE);
 
     ob_start();
@@ -47,11 +48,34 @@ function getTemplate(string $template, array $data) {
     return ob_get_clean();
 }
 
+/**
+ * Отображение страницы с ошибкой
+ * @param $code - http код ошибки
+ */
 function errorPage($code) {
     http_response_code($code);
     $_SERVER['REDIRECT_STATUS'] = $code;
     require_once ROOT. '/error.php';
     exit();
+}
+
+/**
+ * Логирование ошибок
+ * Если не указан файл, то ошибка отправляется на email администратору
+ * Также сообщение message отправляется в системный регистратор PHP, используя механизм логирования операционной
+ * системы, или файл, в зависимости от значения директивы error_log в конфигурационном файле.
+ * @param string $message - текст ошибки
+ * @param string $file - файл для логирования ошибок
+ */
+function errorLog(string $message, string $file = '') {
+    if(!empty($file)) {
+        error_log($message . PHP_EOL, 3, $file);
+    }
+    elseif (defined('ADMIN_MAIL') && !empty(ADMIN_MAIL)) {
+        error_log($message, 1, ADMIN_MAIL);
+    }
+
+    error_log($message, 0);
 }
 
 /**
@@ -171,7 +195,10 @@ function checkError($field) {
     return !empty($errors[$field]) ? 'form__item--invalid' : '';
 }
 
-
+/**
+ * Сохранение просмотренного лота в историю
+ * @param $id
+ */
 function addLotHistory($id) {
     $history = getLotHistory();
 
@@ -181,6 +208,10 @@ function addLotHistory($id) {
     setcookie('lot-history', json_encode($history), time() + 7 * 86400);
 }
 
+/**
+ * Возвращает список просмотренных лотов
+ * @return array|mixed
+ */
 function getLotHistory() {
     $history = $_COOKIE['lot-history'] ?? [];
 

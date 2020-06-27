@@ -1,16 +1,19 @@
 <?php
-require_once 'src/config.php';
-require_once 'src/functions.php';
+require_once 'src/init.php';
 
-if(!user\isAuth()) {
+use function yeticave\user\isAuth;
+use function yeticave\user\getName;
+use function yeticave\user\getAvatar;
+
+if(!isAuth()) {
     header('Location: /login.php');
     exit();
 }
 
 $content = getTemplate(
     'profile.php', [
-    'name' => user\getName(),
-    'avatar' => user\getAvatar()
+    'name' => getName(),
+    'avatar' => getAvatar()
 ]);
 
 

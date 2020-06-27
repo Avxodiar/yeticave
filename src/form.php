@@ -1,7 +1,7 @@
 <?php
 namespace yeticave\form;
 
-use function user\searchByEmail;
+use function yeticave\user\searchByEmail;
 
 const ERROR_FIELDS = [
     'email' => 'Введите e-mail',
