@@ -10,6 +10,6 @@ if(empty($error)) {
     $error = (empty($res)) ? 'По вашему запросу ничего не найдено.' : '';
 }
 
-$content = getTemplate('search.php', ['search'=> $search, 'elems' => $res, 'error' => $error]);
+$content = getTemplate('search.php', ['search'=> htmlspecialchars($search), 'elems' => $res, 'error' => $error]);
 
 includeTemplate('Поиск', $content);

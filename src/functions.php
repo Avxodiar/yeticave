@@ -9,7 +9,7 @@ use function yeticave\user\getAvatar;
  * @param $content
  */
 function includeTemplate($title, $content) {
-    global $categories, $logoLink;
+    global $logoLink;
 
     print(
         getTemplate(
@@ -20,7 +20,7 @@ function includeTemplate($title, $content) {
             'userName' => getName(),
             'userAvatar' => getAvatar(),
             'mainContainer' => $content,
-            'categories' => $categories
+            'categories' => \yeticave\lot\getCategories()
             ]
         )
     );

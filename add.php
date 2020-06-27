@@ -11,6 +11,7 @@ if(!isAuth()) {
 $arRes = [];
 $errors = [];
 
+$categories = \yeticave\lot\getCategories();
 $requiredFields = ['lot-name', 'category', 'message', 'lot-rate', 'lot-step', 'lot-date'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

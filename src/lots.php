@@ -5,7 +5,6 @@ use function yeticave\db\query;
 use function yeticave\db\prepareStmt;
 use function yeticave\db\executeStmt;
 use function yeticave\db\getAssocResult;
-use function yeticave\db\searchIndex;
 
 // список основных категорий лотов
 const CATEGORIES = array(1 => 'Доски и лыжи', 'Крепления', 'Ботинки', 'Одежда', 'Инструменты', 'Разное');
@@ -41,6 +40,27 @@ function getNewLots($count = 9) {
             ORDER BY `data_start` DESC
             LIMIT ' . $count;
     $lots = query($sql);
+
+    return check($lots);
+}
+
+function getCategoryLots(int $id) {
+
+    $categories = getCategories();
+    if(!isset($categories[$id])) {
+        return false;
+    }
+
+    $sql = 'SELECT lots.id, lots.name, categories.name AS `category`, lots.price_start AS `price`,
+                lots.price_step, lots.image_url AS `pict`, lots.description
+            FROM `lots`
+            LEFT JOIN `categories` ON lots.category_id = categories.id
+            WHERE lots.active = 1 AND lots.category_id = ? AND lots.data_finish > NOW()
+            ORDER BY `data_start` DESC';
+
+    $stmt = prepareStmt($sql);
+    executeStmt($stmt, [$id]);
+    $lots = getAssocResult($stmt, true) ?? [];
 
     return check($lots);
 }

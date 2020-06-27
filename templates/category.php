@@ -1,14 +1,14 @@
   <div class="container">
     <section class="lots">
-      <h2>Результаты поиска по запросу «<span><?=$search;?></span>»</h2>
-      <?php if(!empty($error)):?>
-        <p class="lot__title">
-            <?=$error?><br>
-            Пожалуйста, проверьте правильность написания или измените запрос для поиска.
-        </p>
+      <h2>Все лоты в категории <span>«<?=$catName;?>»</span></h2>
+
+      <?php if(empty($lots)):?>
+          <p class="lots__list">
+              Активные лоты в данной категории отсутствуют.
+          </p>
       <?php else:?>
       <ul class="lots__list">
-        <?php foreach ($elems as $lot):?>
+        <?php foreach ($lots as $lot):?>
         <li class="lots__item lot">
           <div class="lot__image">
             <img src="<?=$lot['pict']?>" width="350" height="260" alt="<?=$lot['alt'];?>">
@@ -32,7 +32,7 @@
       <?php endif;?>
     </section>
 
-    <?php if(empty($error)):?>
+    <?php if(!empty($lots)):?>
     <ul class="pagination-list">
       <li class="pagination-item pagination-item-prev"><a>Назад</a></li>
       <li class="pagination-item pagination-item-active"><a>1</a></li>
