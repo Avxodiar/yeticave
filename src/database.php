@@ -67,11 +67,13 @@ function executeStmt(\mysqli_stmt $stmt, $params, $insert = false) {
 /**
  * Получение результата выполнения подготовленного запроса
  * @param \mysqli_stmt $stmt
- * @return array|null
+ * @param bool         $all - все результаты
+ * @return array|mixed|null
  */
-function getAssocResult(\mysqli_stmt $stmt){
+function getAssocResult(\mysqli_stmt $stmt, $all = false){
     $res = $stmt->get_result();
-    return $res->fetch_assoc();
+
+    return ($all) ? $res->fetch_all(MYSQLI_ASSOC) : $res->fetch_assoc();
 }
 
 /**

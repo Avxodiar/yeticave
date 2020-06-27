@@ -54,3 +54,6 @@ CREATE TABLE bids (
 
 CREATE UNIQUE INDEX `email` ON users(`email`);
 CREATE UNIQUE INDEX `name` ON categories(`name`);
+
+# Создание индекса полнотекстового поиска
+CREATE FULLTEXT INDEX yeti_search ON  lots(name, description)

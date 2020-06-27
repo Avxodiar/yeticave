@@ -5,6 +5,7 @@ use function yeticave\db\query;
 use function yeticave\db\prepareStmt;
 use function yeticave\db\executeStmt;
 use function yeticave\db\getAssocResult;
+use function yeticave\db\searchIndex;
 
 // список основных категорий лотов
 const CATEGORIES = array(1 => 'Доски и лыжи', 'Крепления', 'Ботинки', 'Одежда', 'Инструменты', 'Разное');
@@ -33,10 +34,10 @@ function getCategories() {
  */
 function getNewLots($count = 9) {
     $sql = 'SELECT lots.id, lots.name, categories.name AS `category`, lots.price_start AS `price`,
-                lots.price_step, lots.image_url as `pict`, lots.description
+                lots.price_step, lots.image_url AS `pict`, lots.description
             FROM `lots`
             LEFT JOIN `categories` ON lots.category_id = categories.id
-            WHERE lots.active = 1 and lots.data_finish > NOW()
+            WHERE lots.active = 1 AND lots.data_finish > NOW()
             ORDER BY `data_start` DESC
             LIMIT ' . $count;
     $lots = query($sql);
@@ -44,16 +45,42 @@ function getNewLots($count = 9) {
     return check($lots);
 }
 
+/**
+ * Получение лота по его ID
+ * @param int $id
+ * @return array|null
+ */
 function getLot(int $id) {
     $sql = 'SELECT lots.id, lots.name, categories.name AS `category`, lots.price_start AS `price`,
-                lots.price_step, lots.image_url as `pict`, lots.description
+                lots.price_step, lots.image_url AS `pict`, lots.description
             FROM `lots`
             LEFT JOIN `categories` ON lots.category_id = categories.id
-            WHERE lots.id = ? and lots.active = 1 and lots.data_finish > NOW()';
+            WHERE lots.id = ? AND lots.active = 1 and lots.data_finish > NOW()';
     $stmt = prepareStmt($sql);
     executeStmt($stmt, [$id]);
 
     return getAssocResult($stmt) ?? [];
+}
+
+/**
+ * Полнотекстовый поиск по полям названия и описания лотов
+ * @param string $search
+ * @return array|null
+ */
+function search(string $search) {
+    //searchIndex();
+    $sql =  'SELECT lots.id, lots.name, categories.name AS `category`, lots.price_start AS `price`,
+                lots.price_step, lots.image_url AS `pict`, lots.description
+            FROM `lots`
+            LEFT JOIN `categories` ON lots.category_id = categories.id
+            WHERE lots.active = 1 AND lots.data_finish > NOW() AND
+                  MATCH(lots.name, description) AGAINST(?)';
+    $stmt = prepareStmt($sql);
+    executeStmt($stmt, [$search]);
+
+    $data = getAssocResult($stmt, true) ?? [];
+
+    return check($data);
 }
 
 /**
