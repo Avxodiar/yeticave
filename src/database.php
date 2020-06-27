@@ -75,16 +75,20 @@ function getAssocResult(\mysqli_stmt $stmt){
 }
 
 /**
- * Добавление записи в базу
- * @deprecated
- * @param $query
- * @return bool|int|string
+ * Получение данных из базы
+ * только для безопасных запросов!
+ * @param string $sql
+ * @return array|bool|null
  */
-function insert($query) {
+function query(string $sql) {
+    if(empty($sql)) {
+        return false;
+    }
+
     global $mysqli;
-    $res = mysqli_query($mysqli, $query);
-    if($res) {
-        return mysqli_insert_id($mysqli);
+    $result = mysqli_query($mysqli, $sql);
+    if ($result) {
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     $error = mysqli_error($mysqli);
