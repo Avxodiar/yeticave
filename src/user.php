@@ -52,7 +52,7 @@ function add(array $fields) {
  * @param int $id
  * @return array
  */
-function get(int $id) {
+function getInfo(int $id) {
     $sql = 'SELECT * FROM `users` WHERE `id` = ?';
     $stmt = prepareStmt($sql);
     executeStmt($stmt, $id);
@@ -85,10 +85,10 @@ function hashPassword(string $password) {
  * @param array $user
  */
 function auth(int $id, array $user) {
-    $user = !empty($user) ? $user : get($id);
-    $_SESSION['id'] = $user['id'];
-    $_SESSION['user'] = $user['name'];
-    $_SESSION['avatar'] = $user['avatar_url'] ? AVATARS_UPLOAD_DIR . $user['avatar_url'] : 'img/user.png';
+    $user = !empty($user) ? $user : getInfo($id);
+    $_SESSION['user_id'] = $user['id'];
+    $_SESSION['user_name'] = $user['name'];
+    $_SESSION['user_avatar'] = $user['avatar_url'] ? AVATARS_UPLOAD_DIR . $user['avatar_url'] : 'img/user.png';
 }
 
 /**
@@ -96,22 +96,29 @@ function auth(int $id, array $user) {
  * @return bool
  */
 function isAuth() {
-    return !empty($_SESSION['user']);
+    return !empty($_SESSION['user_id']);
 }
 
 /**
  * Разлогиниваение пользователя
  */
 function logout() {
-    unset($_SESSION['user'], $_SESSION['avatar']);
+    unset($_SESSION['user_id'], $_SESSION['user_name'], $_SESSION['user_avatar']);
 }
 
+/**
+ * Возвращает id пользователя из данных сессии
+ * @return int|bool
+ */
+function getId() {
+    return $_SESSION['user_id'] ?? false;
+}
 /**
  * Возвращает имя пользователя из данных сессии
  * @return mixed|string
  */
 function getName() {
-    return $_SESSION['user'] ?? '';
+    return $_SESSION['user_name'] ?? '';
 }
 
 /**
@@ -119,5 +126,5 @@ function getName() {
  * @return mixed|string
  */
 function getAvatar() {
-    return $_SESSION['avatar'] ?? '';
+    return $_SESSION['user_avatar'] ?? '';
 }

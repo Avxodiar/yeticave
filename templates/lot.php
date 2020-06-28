@@ -1,5 +1,5 @@
 <section class="lot-item container">
-    <h2><?=$lot['name'];?></h2>
+    <h2><?=html_entity_decode($lot['name']);?></h2>
     <div class="lot-item__content">
         <div class="lot-item__left">
             <div class="lot-item__image">

@@ -62,17 +62,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $file_type = finfo_file($fInfo, $upload['tmp_name']);
 
             if (strpos($file_type, 'image') === false) {
-                $errors['lot-image'] = 'Может быть выбран только изображение!';
+                $errors['lot-image'] = 'Может быть выбрано только изображение!';
             } else {
                 $file_url = LOTS_UPLOAD_DIR . $file_name;
-                move_uploaded_file(
-                    $upload['tmp_name'],
-                    ROOT. LOTS_UPLOAD_DIR . $file_name
-                );
+                move_uploaded_file($upload['tmp_name'], ROOT . $file_url );
                 $arRes['lot-image'] = $file_url;
             }
         }
     }
+
+    $res = yeticave\lot\addLot($arRes);
+    if($res) {
+        header('Location: /lot.php?id=' . $res);
+    } else {
+        errorPage(500);
+    }
+
 } else {
     $arRes = array_fill_keys($requiredFields, '');
     $arRes['lot-image'] = '';

@@ -5,6 +5,7 @@ use function yeticave\db\query;
 use function yeticave\db\prepareStmt;
 use function yeticave\db\executeStmt;
 use function yeticave\db\getAssocResult;
+use function yeticave\user\getId;
 
 // список основных категорий лотов
 const CATEGORIES = array(1 => 'Доски и лыжи', 'Крепления', 'Ботинки', 'Одежда', 'Инструменты', 'Разное');
@@ -44,6 +45,11 @@ function getNewLots($count = 9) {
     return check($lots);
 }
 
+/**
+ * Получение списка лотов для указанной категории
+ * @param int $id
+ * @return array|bool
+ */
 function getCategoryLots(int $id) {
 
     $categories = getCategories();
@@ -66,6 +72,33 @@ function getCategoryLots(int $id) {
 }
 
 /**
+ * Добавление лота в БД
+ * @param $data
+ * @return bool|int
+ */
+function addLot($data) {
+    if(empty($data)) {
+        return false;
+    }
+    $fields = [
+        'name' => (string)$data['lot-name'],
+        'category_id' => (int)$data['category'],
+        'user_id' => (int)getId(),
+        'image_url' => (string)$data['lot-image'],
+        'data_finish' => (string)$data['lot-date'],
+        'price_start' => (int)$data['lot-rate'],
+        'price_step' => (int)$data['lot-step'],
+        'description' => (string)$data['message']
+    ];
+
+    $sql = 'INSERT INTO `lots`
+    (`name`, `category_id`, `user_id`, `image_url`, `data_start`, `data_finish`, `price_start`, `price_step`, `description`)
+    VALUES (?, ?, ?, ?, NOW(), ?, ?, ?, ?)';
+    $stmt = prepareStmt($sql);
+
+    return executeStmt($stmt, $fields, true);
+}
+/**
  * Получение лота по его ID
  * @param int $id
  * @return array|null
@@ -80,6 +113,31 @@ function getLot(int $id) {
     executeStmt($stmt, [$id]);
 
     return getAssocResult($stmt) ?? [];
+}
+
+/**
+ * Получение списка лотов по их id
+ * @param array $ids
+ * @return array
+ */
+function getLots(array $ids) {
+    if(empty($ids)) {
+        return [[]];
+    }
+    if(count($ids) === 1) {
+        return [getLot( current($ids) )];
+    }
+    $listId = str_repeat(', ?', count($ids)-1);
+    $sql = "SELECT lots.id, lots.name, categories.name AS `category`, lots.price_start AS `price`,
+                lots.price_step, lots.image_url AS `pict`, lots.description
+            FROM `lots`
+            LEFT JOIN `categories` ON lots.category_id = categories.id
+            WHERE lots.id in (?{$listId}) AND lots.active = 1 and lots.data_finish > NOW()";
+
+    $stmt = prepareStmt($sql);
+    executeStmt($stmt, $ids);
+
+    return getAssocResult($stmt, true) ?? [];
 }
 
 /**
@@ -105,7 +163,6 @@ function search(string $search) {
 
 /**
  * Валидация данных по лотам
- * @todo Добавить изображение лота по умолчанию, если указанное изображение отсутсвует
  * @param array $data - массив со списком лотов
  * @return array
  */
@@ -131,6 +188,7 @@ function checkFields(&$value) {
 
 /**
  * Валидация полей данных у лота
+ * @todo Добавить изображение лота (pict) по умолчанию, если указанное изображение отсутсвует
  * @param        $value - значение
  * @param string $param - ключ/поле валидации
  * @param bool   $rub   - флаг ф-ции priceFormat
@@ -144,8 +202,7 @@ function lotValidator(&$value, $param = '', $rub = true) {
             $value = priceFormat($value, false);
             break;
         case 'pict':
-            $url = pathinfo($value);
-            $value = file_exists(IMG_PATH . $url['basename']) ? $value : '';
+            $value = file_exists($value) ? $value : '';
             break;
         case 'ts':
             $timeDiff = time() - $value;
@@ -221,6 +278,5 @@ function addLotHistory($id) {
 function getLotHistory() {
     $history = $_COOKIE['lot-history'] ?? [];
 
-    $history = empty($history) ? [] : json_decode($history, false);
-    return $history;
+    return empty($history) ? [] : json_decode($history, false);
 }

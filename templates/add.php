@@ -11,9 +11,9 @@
             <label for="category">Категория</label>
             <select id="category" name="category" required>
                 <?php
-                 foreach ($categories as $catName) {
+                 foreach ($categories as $catId => $catName) {
                     $select = ($arRes['category'] === $catName) ? 'selected' : '';
-                    echo "<option {$select}>{$catName}</option>";
+                    echo "<option value='{$catId}' {$select}>{$catName}</option>";
                 }?>
             </select>
             <span class="form__error">Выберите категорию</span>
