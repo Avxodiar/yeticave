@@ -1,10 +1,11 @@
 <?php
 namespace yeticave\lot;
 
-use function yeticave\db\query;
-use function yeticave\db\prepareStmt;
-use function yeticave\db\executeStmt;
-use function yeticave\db\getAssocResult;
+use function yeticave\database\query;
+use function yeticave\database\prepareStmt;
+use function yeticave\database\executeStmt;
+use function yeticave\database\getAssocResult;
+use function yeticave\database\transact;
 use function yeticave\user\getId;
 
 // список основных категорий лотов
@@ -34,7 +35,7 @@ function getCategories() {
  */
 function getNewLots($count = 9) {
     $sql = 'SELECT lots.id, lots.name, categories.name AS `category`, lots.price_start AS `price`,
-                lots.price_step, lots.image_url AS `pict`, lots.description
+                lots.price_rate, lots.price_step, lots.image_url AS `pict`, lots.description
             FROM `lots`
             LEFT JOIN `categories` ON lots.category_id = categories.id
             WHERE lots.active = 1 AND lots.data_finish > NOW()
@@ -58,7 +59,7 @@ function getCategoryLots(int $id) {
     }
 
     $sql = 'SELECT lots.id, lots.name, categories.name AS `category`, lots.price_start AS `price`,
-                lots.price_step, lots.image_url AS `pict`, lots.description
+                lots.price_rate, lots.price_step, lots.image_url AS `pict`, lots.description
             FROM `lots`
             LEFT JOIN `categories` ON lots.category_id = categories.id
             WHERE lots.active = 1 AND lots.category_id = ? AND lots.data_finish > NOW()
@@ -92,27 +93,11 @@ function addLot($data) {
     ];
 
     $sql = 'INSERT INTO `lots`
-    (`name`, `category_id`, `user_id`, `image_url`, `data_start`, `data_finish`, `price_start`, `price_step`, `description`)
-    VALUES (?, ?, ?, ?, NOW(), ?, ?, ?, ?)';
+    (`name`, `category_id`, `user_id`, `image_url`, `data_start`, `data_finish`, `price_start`, `price_rate`, `price_step`, `description`)
+    VALUES (?, ?, ?, ?, NOW(), ?, ?, 0, ?, ?)';
     $stmt = prepareStmt($sql);
 
     return executeStmt($stmt, $fields, true);
-}
-/**
- * Получение лота по его ID
- * @param int $id
- * @return array|null
- */
-function getLot(int $id) {
-    $sql = 'SELECT lots.id, lots.name, categories.name AS `category`, lots.price_start AS `price`,
-                lots.price_step, lots.image_url AS `pict`, lots.description
-            FROM `lots`
-            LEFT JOIN `categories` ON lots.category_id = categories.id
-            WHERE lots.id = ? AND lots.active = 1 and lots.data_finish > NOW()';
-    $stmt = prepareStmt($sql);
-    executeStmt($stmt, [$id]);
-
-    return getAssocResult($stmt) ?? [];
 }
 
 /**
@@ -124,12 +109,9 @@ function getLots(array $ids) {
     if(empty($ids)) {
         return [[]];
     }
-    if(count($ids) === 1) {
-        return [getLot( current($ids) )];
-    }
     $listId = str_repeat(', ?', count($ids)-1);
     $sql = "SELECT lots.id, lots.name, categories.name AS `category`, lots.price_start AS `price`,
-                lots.price_step, lots.image_url AS `pict`, lots.description
+                lots.price_rate, lots.price_step, lots.image_url AS `pict`, lots.description
             FROM `lots`
             LEFT JOIN `categories` ON lots.category_id = categories.id
             WHERE lots.id in (?{$listId}) AND lots.active = 1 and lots.data_finish > NOW()";
@@ -137,7 +119,9 @@ function getLots(array $ids) {
     $stmt = prepareStmt($sql);
     executeStmt($stmt, $ids);
 
-    return getAssocResult($stmt, true) ?? [];
+    $lots = getAssocResult($stmt, true) ?? [];
+
+    return check($lots);
 }
 
 /**
@@ -148,7 +132,7 @@ function getLots(array $ids) {
 function search(string $search) {
     //searchIndex();
     $sql =  'SELECT lots.id, lots.name, categories.name AS `category`, lots.price_start AS `price`,
-                lots.price_step, lots.image_url AS `pict`, lots.description
+                lots.price_rate, lots.price_step, lots.image_url AS `pict`, lots.description
             FROM `lots`
             LEFT JOIN `categories` ON lots.category_id = categories.id
             WHERE lots.active = 1 AND lots.data_finish > NOW() AND
@@ -163,15 +147,29 @@ function search(string $search) {
 
 /**
  * Валидация данных по лотам
+ * @todo Добавить изображение лота (pict) по умолчанию, если указанное изображение отсутсвует
  * @param array $data - массив со списком лотов
  * @return array
  */
 function check(array $data) {
     array_walk($data, '\yeticave\lot\checkFields');
     foreach ($data as $key => &$lot) {
-        array_walk($lot, '\yeticave\lot\lotValidator');
-        $data[$key]['alt'] = $data[$key]['alt'] ?? $data[$key]['name'];
-        $data[$key]['timer'] = getLeftMidnight();
+        $lot['name'] = html_entity_decode($lot['name']);
+        $lot['alt'] = $lot['alt'] ?? $lot['name'];
+        $lot['description'] = htmlspecialchars($lot['description']);
+
+        $lot['price'] = (int) $lot['price'];
+        $lot['price_rate'] = (int) $lot['price_rate'];
+        $lot['price_step'] = (int) $lot['price_step'];
+
+        $minPrice = ($lot['price_rate'] == 0) ? $lot['price'] :
+            $lot['price'] + (floor( ($lot['price_rate'] - $lot['price']) / $lot['price_step'] ) + 1) * $lot['price_step'];
+
+        $lot['minPrice'] = $minPrice;
+        $lot['priceFormat'] = priceFormat( $lot['price'], true);
+        $lot['minPriceFormat'] = priceFormat($minPrice, true);
+
+        $lot['timer'] = getLeftMidnight();
     }
     return $data;
 }
@@ -187,35 +185,64 @@ function checkFields(&$value) {
 }
 
 /**
- * Валидация полей данных у лота
- * @todo Добавить изображение лота (pict) по умолчанию, если указанное изображение отсутсвует
- * @param        $value - значение
- * @param string $param - ключ/поле валидации
- * @param bool   $rub   - флаг ф-ции priceFormat
+ * Добавление ставки и обновление цены лота на значение ставки
+ * @param int $lotId
+ * @param int $cost
+ * @return int|bool
  */
-function lotValidator(&$value, $param = '', $rub = true) {
-    switch ($param) {
-        case 'price':
-            $value = priceFormat($value, $rub);
-            break;
-        case 'minPrice':
-            $value = priceFormat($value, false);
-            break;
-        case 'pict':
-            $value = file_exists($value) ? $value : '';
-            break;
-        case 'ts':
-            $timeDiff = time() - $value;
-            if($timeDiff < 3900) {
-                $timeDiff = floor($timeDiff / 60);
-                $value = ($timeDiff > 60) ? 'Час назад' : $timeDiff . ' минут назад';
-            } else {
-                $value = gmdate('y.m.d в H:i', $value);
-            }
-            break;
-        default:
-            $value = htmlspecialchars($value);
+function addBet(int $lotId, int $cost) {
+    $userId = getId();
+
+    $queries = [
+      [
+          'sql' => 'INSERT INTO bids (`user_id`, `lot_id`, `data_insert`, `sum`) VALUES (?, ?, NOW(), ?)',
+          'fields' => [$userId, $lotId, $cost],
+          'insert' => 1
+      ],
+      [
+          'sql' => 'UPDATE lots SET price_rate = ? WHERE id = ?',
+          'fields' => [$cost, $lotId]
+      ],
+    ];
+
+    $result = transact($queries);
+
+    //$result[0] - id добавленной записи ставки
+    //$result[1] - удалось ли обновить лот
+    return ($result[0] && $result[1]) ? $result[0] : false;
+}
+
+/**
+ * Список ставок по указанному лоту
+ * @param int $lotId
+ * @return array
+ */
+function getBets(int $lotId) {
+
+    $sql = 'SELECT b.id, u.name,UNIX_TIMESTAMP(b.data_insert) AS timestamp, b.sum AS price FROM bids b
+            JOIN users u ON b.user_id = u.id
+            WHERE lot_id = ? ORDER BY ID DESC';
+
+    $stmt = prepareStmt($sql);
+    executeStmt($stmt, [$lotId]);
+
+    $data = getAssocResult($stmt, true) ?? [];
+
+    //форматирование ставок
+    foreach ($data as &$bet) {
+        $ts = $bet['timestamp'];
+        $timeDiff = time() - $ts;
+        if ($timeDiff < 7000) {
+            $timeDiff = floor($timeDiff / 60);
+            $ts = ($timeDiff > 60) ? 'Час назад' : $timeDiff . ' минут назад';
+        } else {
+            $ts = gmdate('y.m.d в H:i', $ts);
+        }
+        $bet['ts'] = $ts;
     }
+    unset($bet);
+
+    return $data;
 }
 
 /**

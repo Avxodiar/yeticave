@@ -1,10 +1,16 @@
 <nav class="nav">
     <ul class="nav__list container">
         <?php
-        foreach ($categories as $categoryId => $categoryName): ?>
-            <li class="nav__item">
+        $currentCategoryId = (int) ($_GET['id'] ?? 0);
+        foreach ($categories as $categoryId => $categoryName)
+        {
+            $currentCategoryClass = (CATEGORY_PAGE && ($currentCategoryId === $categoryId)) ? 'nav__item--current' : '';
+          ?>
+            <li class="nav__item <?=$currentCategoryClass?>">
                 <a href="category.php?id=<?=$categoryId?>"><?=$categoryName?></a>
             </li>
-        <?php endforeach; ?>
+          <?php
+        }
+        ?>
     </ul>
 </nav>

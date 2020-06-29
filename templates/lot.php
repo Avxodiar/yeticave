@@ -15,25 +15,26 @@
                 </div>
                 <div class="lot-item__cost-state">
                     <div class="lot-item__rate">
-                        <span class="lot-item__amount">Текущая цена</span>
-                        <span class="lot-item__cost"><?=$lot['price'];?></span>
+                        <span class="lot-item__amount">Стартовая цена</span>
+                        <span class="lot-item__cost"><?=$lot['priceFormat'];?></span>
                     </div>
                     <div class="lot-item__min-cost">
-                        Мин. ставка <span><?=$lot['minPrice'];?></span>
+                        Мин. ставка <span><?=$lot['minPriceFormat'];?></span>
                     </div>
                 </div>
                 <?php if($isAuth): ?>
-                <form class="lot-item__form" action="https://echo.htmlacademy.ru" method="post">
+                <form class="lot-item__form" action="/lot.php" method="post">
                     <p class="lot-item__form-item">
+                        <input type="hidden" name="lot" value="<?=$lot['id'];?>">
                         <label for="cost">Ваша ставка</label>
-                        <input id="cost" type="number" name="cost" placeholder="<?=$lot['minPrice'];?>">
+                        <input id="cost" type="number" name="cost" min="<?=$lot['minPrice'];?>" required placeholder="<?=$lot['minPrice'];?>">
                     </p>
                     <button type="submit" class="button">Сделать ставку</button>
                 </form>
                 <?php endif;?>
             </div>
-            <?php if(count($bets)): ?>
-            <div class="history">
+            <?php $betClass = count($bets) ? '' : 'hide'; ?>
+            <div class="history <?=$betClass?>">
                 <h3>История ставок (<span><?=count($bets);?></span>)</h3>
                 <table class="history__list">
                     <?php foreach ($bets as $item): ?>
@@ -45,7 +46,6 @@
                     <?php endforeach; ?>
                 </table>
             </div>
-            <?php endif;?>
         </div>
     </div>
 </section>

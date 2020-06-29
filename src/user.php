@@ -1,9 +1,9 @@
 <?php
 namespace yeticave\user;
 
-use function yeticave\db\prepareStmt;
-use function yeticave\db\executeStmt;
-use function yeticave\db\getAssocResult;
+use function yeticave\database\prepareStmt;
+use function yeticave\database\executeStmt;
+use function yeticave\database\getAssocResult;
 
 /**
  * Поиск пользователя по email

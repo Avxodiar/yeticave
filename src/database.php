@@ -1,5 +1,5 @@
 <?php
-namespace yeticave\db;
+namespace yeticave\database;
 
 /**
  * Установка соединения с БД
@@ -54,14 +54,42 @@ function executeStmt(\mysqli_stmt $stmt, $params, $insert = false) {
 
     if (!$stmt->bind_param($keys, ...$vars)) {
         error('Не удалось привязать параметры:');
+        return false;
     }
 
-    if (!$stmt->execute()) {
+    $res = $stmt->execute();
+    if (!$res) {
         error('Не удалось выполнить запрос:');
+        return false;
     }
-    elseif ($insert) {
-        return mysqli_insert_id($mysqli);
+
+    return ($insert) ? mysqli_insert_id($mysqli) : $res;
+}
+
+function transact(array $queries) {
+    global $mysqli;
+
+    mysqli_begin_transaction($mysqli);
+
+    $results = [];
+    foreach ($queries as $id => $query) {
+        $sql = $query['sql'];
+        $fields = $query['fields'];
+        $insert = (bool) ($query['insert'] ?? 0);
+
+        $stmt = prepareStmt($sql);
+        $res = executeStmt($stmt, $fields, $insert);
+        if($res) {
+            $results[$id] = $res;
+        } else {
+            mysqli_rollback($mysqli);
+            return false;
+        }
     }
+
+    mysqli_commit($mysqli);
+
+    return $results;
 }
 
 /**

@@ -98,5 +98,6 @@ if(!MAIN_PAGE) {
     </div>
 </footer>
 
+<?php showJS(); ?>
 </body>
 </html>

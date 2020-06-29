@@ -1,6 +1,5 @@
 <?php
 require_once 'src/config.php';
-require_once 'data/data.php';
 require_once 'src/database.php';
 require_once 'src/functions.php';
 require_once 'src/user.php';

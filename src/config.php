@@ -23,6 +23,9 @@ define ('SUPPORTED_IMAGES', ['jpg', 'jpeg', 'png']);
 $mainPage = ($_SERVER['REQUEST_URI'] === '/' || $_SERVER['REQUEST_URI'] === '/index.php');
 define('MAIN_PAGE', $mainPage);
 
+$categoryPage = ($_SERVER['SCRIPT_NAME'] === '/category.php');
+define('CATEGORY_PAGE', $categoryPage);
+
 $logoLink = MAIN_PAGE ? '' : ' href="/"';
 
 const ADMIN_MAIL = '';
@@ -34,3 +37,5 @@ const DB_CONFIG = [
    'password' => '',
    'port' => 3306
 ];
+
+$JS = array();

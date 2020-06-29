@@ -49,6 +49,31 @@ function getTemplate(string $template, array $data) {
 }
 
 /**
+ * добавление js файла для подключения в шаблон
+ * @param string $jsPath
+ */
+function includeJS(string $jsPath) {
+    global $JS;
+
+    if(file_exists(ROOT .'/'. $jsPath)) {
+        $JS[] = $jsPath;
+    }
+}
+
+/**
+ * Вывод списка js файлов подключенных через includeJS в шаблоне
+ */
+function showJS(){
+    global $JS;
+
+    if (!empty($JS)) {
+        foreach ($JS as $jsFile) {
+            echo "<script src='{$jsFile}'></script>";
+        }
+    }
+}
+
+/**
  * Отображение страницы с ошибкой
  * @param $code - http код ошибки
  */

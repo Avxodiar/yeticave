@@ -18,13 +18,13 @@
                         <span class="lot__category"><?= $lot['category']; ?></span>
                         <h3 class="lot__title">
                             <a class="text-link" href="lot.php?id=<?=$lot['id']?>">
-                                <?=html_entity_decode($lot['name'])?>
+                                <?=$lot['name']?>
                             </a>
                         </h3>
                         <div class="lot__state">
                             <div class="lot__rate">
                                 <span class="lot__amount">Стартовая цена</span>
-                                <span class="lot__cost"><?=$lot['price']?></span>
+                                <span class="lot__cost"><?=$lot['priceFormat']?></span>
                             </div>
                             <div class="lot__timer timer">
                                 <?= $lot['timer']; ?>

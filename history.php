@@ -3,7 +3,6 @@ require_once 'src/init.php';
 
 use function yeticave\user\isAuth;
 use function yeticave\lot\getLotHistory;
-use function yeticave\lot\check;
 use function yeticave\lot\getLots;
 
 if(!isAuth()) {
@@ -11,7 +10,7 @@ if(!isAuth()) {
 }
 
 $historyLot = getLotHistory();
-$lots = (count($historyLot)) ? check( getLots($historyLot) ) : [];
+$lots = (count($historyLot)) ? getLots($historyLot) : [];
 
 $content = getTemplate('history.php', ['lots' => $lots ] );
 

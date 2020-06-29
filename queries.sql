@@ -17,28 +17,30 @@ BEGIN
 RETURN myvar;
 END//
 
-INSERT INTO `lots` (`name`, `category_id`, `price_start`, `price_step`, `image_url`, `data_finish`, `description`, `user_id`)
-VALUES ('DC Ply Mens 2016/2017 Snowboard', 1, 12000, '100', 'img/lot-2.jpg', rand_day(), 'Легкий маневренный сноуборд, готовый дать жару в любом парке, растопив снег мощным щелчком и четкими дугами. Стекловолокно Bi-Ax, уложенное в двух направлениях, наделяет этот снаряд отличной гибкостью и отзывчивостью, а симметричная геометрия в сочетании с классическим прогибом кэмбер позволит уверенно держать высокие скорости. А если к концу катального дня сил совсем не останется, просто посмотрите на Вашу доску и улыбнитесь, крутая графика от Шона Кливера еще никого не оставляла равнодушным.',  1),
-('2014 Rossignol District Snowboard', 1, 10999, '100', 'img/lot-1.jpg', rand_day(), '', 2),
-('Крепления Union Conact Pro 2015 года размер L/XL', 2, 8000, '100', 'img/lot-3.jpg', rand_day(), '', 3),
-('Ботинки для сноуборда DC Mutiny Charocal', 3, 10999, '100', 'img/lot-4.jpg', rand_day(), '', 1),
-('Куртка для сноуборда DC Mutiny Charocal', 4, 7500, '100', 'img/lot-5.jpg', rand_day(), '', 2),
-('Маска Oakley Canopy', 6, 5400, '100', 'img/lot-6.jpg', rand_day(), '', 3);
+INSERT INTO `lots` (`name`, `category_id`, `price_start`, `price_rate`, `price_step`, `image_url`, `data_finish`, `description`, `user_id`)
+VALUES ('DC Ply Mens 2016/2017 Snowboard', 1, 10000, 0, '100', 'img/lot-2.jpg', rand_day(), 'Легкий маневренный сноуборд, готовый дать жару в любом парке, растопив снег мощным щелчком и четкими дугами. Стекловолокно Bi-Ax, уложенное в двух направлениях, наделяет этот снаряд отличной гибкостью и отзывчивостью, а симметричная геометрия в сочетании с классическим прогибом кэмбер позволит уверенно держать высокие скорости. А если к концу катального дня сил совсем не останется, просто посмотрите на Вашу доску и улыбнитесь, крутая графика от Шона Кливера еще никого не оставляла равнодушным.',  1),
+('2014 Rossignol District Snowboard', 1, 10500, 0, '100', 'img/lot-1.jpg', rand_day(), '', 2),
+('Крепления Union Conact Pro 2015 года размер L/XL', 2, 8000, 0, '100', 'img/lot-3.jpg', rand_day(), '', 3),
+('Ботинки для сноуборда DC Mutiny Charocal', 3, 10699, 0, '100', 'img/lot-4.jpg', rand_day(), '', 1),
+('Куртка для сноуборда DC Mutiny Charocal', 4, 7300, 0, '100', 'img/lot-5.jpg', rand_day(), '', 2),
+('Маска Oakley Canopy', 6, 5200, 0, '100', 'img/lot-6.jpg', rand_day(), '', 3);
 
 # Добавление пары ставок для любого объявления
 INSERT INTO `bids` (`user_id`, `lot_id`, `data_insert`, `sum`) VALUES
-(1,1, now(), 15000),
-(1,1, now(), 14500),
-(1,1, now(), 13500),
-(1,1, now(), 13000),
-(2,2, now(), 12100),
-(2,3, now(), 8000),
-(1,4, now(), 11100),
-(1,4, now(), 10999),
-(2,5, now(), 8200),
-(2,5, now(), 7500),
-(3,6, now(), 5500),
-(3,6, now(), 5400);
+(1,1, DATE_SUB(NOW(), INTERVAL 4144 SECOND), 10000),
+(2,1, DATE_SUB(NOW(), INTERVAL 2950 SECOND), 10500),
+(3,1, DATE_SUB(NOW(), INTERVAL 1509 SECOND), 11000),
+(1,1, DATE_SUB(NOW(), INTERVAL 900 SECOND), 11500),
+(2,1, DATE_SUB(NOW(), INTERVAL 250 SECOND), 12000),
+(1,2, DATE_SUB(NOW(), INTERVAL 4567 SECOND), 10500),
+(2,2, DATE_SUB(NOW(), INTERVAL 500 SECOND), 10999),
+(2,3, DATE_SUB(NOW(), INTERVAL 250 SECOND), 8000),
+(1,4, DATE_SUB(NOW(), INTERVAL 1236 SECOND), 10699),
+(3,4, DATE_SUB(NOW(), INTERVAL 350 SECOND), 10999),
+(2,5, DATE_SUB(NOW(), INTERVAL 800 SECOND), 7300),
+(1,5, DATE_SUB(NOW(), INTERVAL 150 SECOND), 7500),
+(1,6, DATE_SUB(NOW(), INTERVAL 555 SECOND), 5200),
+(3,6, DATE_SUB(NOW(), INTERVAL 50 SECOND), 5400);
 
 
 ## Запросы
