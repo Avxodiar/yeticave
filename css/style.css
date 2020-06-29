@@ -1221,7 +1221,7 @@ input:invalid .form__error{
 }
 
 .rates__timer .timer {
-  width: 82px;
+  width: 120px;
   box-sizing: border-box;
 }
 

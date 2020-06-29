@@ -9,9 +9,9 @@
         </div>
         <div class="info">
             <h3><?=$name?></h3>
-            <p><a href="my-lots.php">Мои лоты (0)</a></p>
-            <p><a href="my-bets.php">Мои ставки (0)</a></p>
-            <p><a href="history.php">История просмотров</a></p>
+            <p><a href="/profile_lots.php">Мои лоты (<?=$lotCount?>)</a></p>
+            <p><a href="/profile_bets.php">Мои ставки (<?=$betCount?>)</a></p>
+            <p><a href="/history.php">История просмотров</a></p>
         </div>
     </section>
 

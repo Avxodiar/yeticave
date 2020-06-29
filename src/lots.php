@@ -33,7 +33,7 @@ function getCategories() {
  * @param int $count
  * @return array
  */
-function getNewLots($count = 9) {
+function getNewLots(int $count = 9) {
     $sql = 'SELECT lots.id, lots.name, categories.name AS `category`, lots.price_start AS `price`,
                 lots.price_rate, lots.price_step, lots.image_url AS `pict`, lots.description
             FROM `lots`
@@ -219,7 +219,7 @@ function addBet(int $lotId, int $cost) {
  */
 function getBets(int $lotId) {
 
-    $sql = 'SELECT b.id, u.name,UNIX_TIMESTAMP(b.data_insert) AS timestamp, b.sum AS price FROM bids b
+    $sql = 'SELECT b.id, u.name, UNIX_TIMESTAMP(b.data_insert) AS timestamp, b.sum AS price FROM bids b
             JOIN users u ON b.user_id = u.id
             WHERE lot_id = ? ORDER BY ID DESC';
 
@@ -230,15 +230,7 @@ function getBets(int $lotId) {
 
     //форматирование ставок
     foreach ($data as &$bet) {
-        $ts = $bet['timestamp'];
-        $timeDiff = time() - $ts;
-        if ($timeDiff < 7000) {
-            $timeDiff = floor($timeDiff / 60);
-            $ts = ($timeDiff > 60) ? 'Час назад' : $timeDiff . ' минут назад';
-        } else {
-            $ts = gmdate('y.m.d в H:i', $ts);
-        }
-        $bet['ts'] = $ts;
+        $bet['ts'] = timeFormat( $bet['timestamp'] );
     }
     unset($bet);
 
@@ -274,6 +266,36 @@ function priceFormat($price, $rub = true) {
 }
 
 /**
+ * Форматирование вывода времени
+ * @param int $timestamp
+ * @return false|string
+ */
+function timeFormat(int $timestamp) {
+    $ts = '';
+    $timeDiff = time() - $timestamp;
+
+    // для вывода на странице лота времени в истории ставок
+    if($timeDiff > 0) {
+        if ($timeDiff < 7000) {
+            $timeDiff = floor($timeDiff / 60);
+            $ts = ($timeDiff > 60) ? 'Час назад' : $timeDiff . ' минут назад';
+        } else {
+            $ts = gmdate('y.m.d в H:i', $timestamp);
+        }
+    }
+    // для вывода на страницах профиля пользователя в списках лотов и ставок
+    else {
+        $timeDiff = abs($timeDiff);
+        if ($timeDiff > 86400) {
+            $ts = gmdate('dд Hч iм', $timeDiff);
+        } else {
+            $ts = gmdate('H:i:s', $timeDiff);
+        }
+    }
+    return $ts;
+}
+
+/**
  * Сколько осталось времени до начала новых суток
  * @return string - формат вывода "ЧЧ:МM"
  */
@@ -306,4 +328,84 @@ function getLotHistory() {
     $history = $_COOKIE['lot-history'] ?? [];
 
     return empty($history) ? [] : json_decode($history, false);
+}
+
+//заглушки
+function getUserLotCount() {
+    $userId = getId();
+    return 0;
+}
+function getUserBetCount() {
+    $userId = getId();
+    return 0;
+};
+
+/**
+ * Возвращение списка ставок пользователя
+ * @return array
+ */
+function getUserBets() {
+    $userId = getId();
+
+    $sql = 'SELECT MAX(b.id) AS id, b.lot_id, MAX(UNIX_TIMESTAMP(b.data_insert)) data_insert, MAX(b.sum) price,
+                l.name, l.image_url, l.description, c.name cat_name, l.winner_id, l.active, UNIX_TIMESTAMP(l.data_finish) data_finish
+            FROM bids b
+            JOIN lots l ON l.id = b.lot_id
+            JOIN categories c ON c.id = l.category_id
+            WHERE b.user_id = ?
+            GROUP BY b.lot_id';
+
+    $stmt = prepareStmt($sql);
+    executeStmt($stmt, [$userId]);
+
+    $data = getAssocResult($stmt, true) ?? [];
+
+    $lots = [];
+    foreach ($data as &$bet) {
+        $lots[] = $bet['lot_id'];
+        $bet['tsInsert'] = timeFormat( $bet['data_insert'] );
+        $bet['tsFinish'] = timeFormat( $bet['data_finish'] );
+        $priceFormat = (int) ceil($bet['price']);
+        $bet['price'] = number_format($priceFormat, 0, '', ' ');
+
+        $bet['status'] = ($bet['winner_id'] === $userId ) ? 'win' : '';
+        if(!$bet['status'] && time() > $bet['data_finish'] ) {
+            $bet['status'] = 'end';
+        }
+    }
+    unset($bet);
+
+    //debugMessage($data);
+    /*  Определение "перебитых" ставок
+    * Реализуется отдельным запросом, т.к. при большом кол-ве лотов и ставок,
+    * если делать подзапросом, объем данных вырастет на порядки
+    */
+    if($lots) {
+        $listId = str_repeat(', ?', count($lots)-1);
+        $sql = "SELECT id, user_id, lot_id FROM bids
+            WHERE lot_id IN (?{$listId}) AND
+            id IN ( SELECT MAX(id) FROM bids GROUP BY lot_id)";
+
+        $stmt = prepareStmt($sql);
+        executeStmt($stmt, $lots);
+        $bids = getAssocResult($stmt, true) ?? [];
+
+        $bidList = [];
+        //список ставок по id лоту с пользователем сделавшего последнюю ставку
+        foreach ($bids as $bid) {
+            $lotId = (int) $bid['lot_id'];
+            $bidList[ $lotId ] = [
+                'id' => (int) $bid['id'],
+                'user_id' => (int) $bid['user_id'],
+                'lot_id' => $lotId
+            ];
+        }
+
+        // перебита ли ставка другим пользователем
+        foreach ($data as &$bet) {
+            $bet['process'] = (bool) ($bidList[ $bet['lot_id'] ]['user_id'] === $userId);
+        }
+    }
+
+    return $data;
 }
