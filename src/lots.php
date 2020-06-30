@@ -275,7 +275,7 @@ function timeFormat(int $timestamp) {
     $timeDiff = time() - $timestamp;
 
     // для вывода на странице лота времени в истории ставок
-    if($timeDiff > 0) {
+    if($timeDiff >= 0) {
         if ($timeDiff < 7000) {
             $timeDiff = floor($timeDiff / 60);
             $ts = ($timeDiff > 60) ? 'Час назад' : $timeDiff . ' минут назад';
@@ -330,15 +330,78 @@ function getLotHistory() {
     return empty($history) ? [] : json_decode($history, false);
 }
 
-//заглушки
+/**
+ * Кол-во лотов у текущего пользователя
+ * @return int
+ */
 function getUserLotCount() {
     $userId = getId();
-    return 0;
+
+    $sql = 'SELECT COUNT(*) AS CNT FROM lots WHERE user_id = ?';
+
+    $stmt = prepareStmt($sql);
+    executeStmt($stmt, [$userId]);
+    $data = getAssocResult($stmt);
+
+    return $data['CNT'] ?? 0;
 }
+
+/**
+ * Кол-во ставок у текущего пользователя
+ * @return int
+ */
 function getUserBetCount() {
     $userId = getId();
-    return 0;
+
+    $sql = 'SELECT count(DISTINCT lot_id) AS CNT FROM bids WHERE user_id = ?';
+
+    $stmt = prepareStmt($sql);
+    executeStmt($stmt, [$userId]);
+    $data = getAssocResult($stmt);
+
+    return $data['CNT'] ?? 0;
 };
+
+/**
+ * Возвращение списка лотов пользователя
+ * @return array
+ */
+function getUserLots(){
+    $userId = getId();
+
+    $sql = 'SELECT l.id, l.name, c.name cat_name, l.image_url, UNIX_TIMESTAMP(l.data_finish) dt_finish,
+                l.price_start, l.price_rate, l.price_step, l.winner_id, l.description, MAX(b.sum) max_bet
+            FROM lots l
+            JOIN categories c ON l.category_id = c.id
+            LEFT JOIN bids b ON b.lot_id = l.id
+            WHERE l.user_id = ?
+            GROUP BY l.id
+            ORDER BY l.id DESC';
+
+    $stmt = prepareStmt($sql);
+    executeStmt($stmt, [$userId]);
+
+    $data = getAssocResult($stmt, true) ?? [];
+
+    $lots = [];
+    foreach ($data as &$lot) {
+        $lot['tsFinish'] = timeFormat( $lot['dt_finish'] );
+        $priceStart = (int) ceil($lot['price_start']);
+        $lot['price_start'] = number_format($priceStart, 0, '', ' ');
+        $priceStep = (int) ceil($lot['price_step']);
+        $lot['price_step'] = number_format($priceStep, 0, '', ' ');
+        $maxBet = (int) ceil($lot['max_bet']);
+        $lot['max_bet'] = ($maxBet) ? number_format($maxBet, 0, '', ' ') . 'р': ' Нет ставок';
+
+        $lot['status'] = ($lot['winner_id'] === $userId ) ? 'win' : '';
+        if(!$lot['status'] && time() > $lot['dt_finish'] ) {
+            $lot['status'] = 'end';
+        }
+    }
+    unset($lot);
+
+    return $data;
+}
 
 /**
  * Возвращение списка ставок пользователя
@@ -348,7 +411,7 @@ function getUserBets() {
     $userId = getId();
 
     $sql = 'SELECT MAX(b.id) AS id, b.lot_id, MAX(UNIX_TIMESTAMP(b.data_insert)) data_insert, MAX(b.sum) price,
-                l.name, l.image_url, l.description, c.name cat_name, l.winner_id, l.active, UNIX_TIMESTAMP(l.data_finish) data_finish
+                l.name, l.image_url, l.description, c.name cat_name, l.price_rate, l.winner_id, l.active, UNIX_TIMESTAMP(l.data_finish) data_finish
             FROM bids b
             JOIN lots l ON l.id = b.lot_id
             JOIN categories c ON c.id = l.category_id
@@ -362,20 +425,36 @@ function getUserBets() {
 
     $lots = [];
     foreach ($data as &$bet) {
-        $lots[] = $bet['lot_id'];
         $bet['tsInsert'] = timeFormat( $bet['data_insert'] );
         $bet['tsFinish'] = timeFormat( $bet['data_finish'] );
         $priceFormat = (int) ceil($bet['price']);
         $bet['price'] = number_format($priceFormat, 0, '', ' ');
 
-        $bet['status'] = ($bet['winner_id'] === $userId ) ? 'win' : '';
+        /*$bet['status'] = ($bet['winner_id'] === $userId ) ? 'win' : '';
         if(!$bet['status'] && time() > $bet['data_finish'] ) {
             $bet['status'] = 'end';
+        }*/
+        $bet['status'] = '';
+        $lotId = (int) $bet['lot_id'];
+        // если лот завершен
+        if( time() > $bet['data_finish'] ) {
+            $winnerId = (int) $bet['winner_id'];
+            // если победитель не указан но была ставка
+            if ( !$bet['winner_id'] && $bet['price_rate'] ) {
+                    $winnerId = checkLotWinner($lotId);
+            }
+            //если победитель текущий пользователь то ставка победила, иначе торги окончены
+            $bet['status'] = ($winnerId === $userId )? 'win' : 'end';
+            $bet['process'] = '';
         }
+        // список лотов для определения статуса ставки
+        else {
+            $lots[] = $lotId;
+        }
+
     }
     unset($bet);
 
-    //debugMessage($data);
     /*  Определение "перебитых" ставок
     * Реализуется отдельным запросом, т.к. при большом кол-ве лотов и ставок,
     * если делать подзапросом, объем данных вырастет на порядки
@@ -403,9 +482,41 @@ function getUserBets() {
 
         // перебита ли ставка другим пользователем
         foreach ($data as &$bet) {
-            $bet['process'] = (bool) ($bidList[ $bet['lot_id'] ]['user_id'] === $userId);
+            $lotId = (int) $bet['lot_id'];
+            if( isset($bidList[ $lotId ])) {
+                $bet['process'] = (bool) ($bidList[ $lotId ]['user_id'] === $userId);
+            }
         }
     }
 
     return $data;
+}
+
+/**
+ * Проверка и установка победителя для завершенного лота
+ * @param int $lotId
+ * @return int
+ * @todo На реальном проекте должна быть заменена на функцию автосканирование и установку победителей ставок запускаемую ежедневно кроном
+ */
+function checkLotWinner(int $lotId) {
+
+    $sql = 'SELECT user_id FROM bids WHERE id = (SELECT MAX(id) FROM bids WHERE lot_id = ?)';
+
+    $stmt = prepareStmt($sql);
+    executeStmt($stmt, [$lotId]);
+    $data = getAssocResult($stmt);
+
+    $winUserId = $data['user_id'] ?? NULL;
+    if($winUserId) {
+        $sql= 'UPDATE lots SET winner_id = ? WHERE id = ?';
+        $stmt = prepareStmt($sql);
+        $res = executeStmt($stmt, [$winUserId, $lotId]);
+
+        // проверяем что обновление удалось
+        if(!$res) {
+            return false;
+        }
+    }
+
+    return $winUserId;
 }

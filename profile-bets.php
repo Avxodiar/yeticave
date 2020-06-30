@@ -10,7 +10,7 @@ if(!isAuth()) {
 }
 
 $content = getTemplate(
-    'my-bets.php', [
+    'user-bets.php', [
     'bets' => getUserBets()
 ]);
 
