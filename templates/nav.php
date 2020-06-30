@@ -1,3 +1,5 @@
+<?php if (SITE_ENABLED) :?>
+
 <nav class="nav">
     <ul class="nav__list container">
         <?php
@@ -14,3 +16,5 @@
         ?>
     </ul>
 </nav>
+
+<?php endif; ?>

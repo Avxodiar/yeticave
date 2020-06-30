@@ -84,6 +84,12 @@ h2 {
   padding: 0 15px;
 }
 
+.container h2.off {
+  text-align: center;
+  margin: 100px auto 200px;
+  padding: 0;
+}
+
 .button {
   display: block;
   padding: 9px 32px;

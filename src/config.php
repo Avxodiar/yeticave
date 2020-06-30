@@ -28,6 +28,8 @@ define('CATEGORY_PAGE', $categoryPage);
 
 $logoLink = MAIN_PAGE ? '' : ' href="/"';
 
+const SITE_ENABLED = true;
+
 const ADMIN_MAIL = '';
 
 const DB_CONFIG = [
@@ -41,6 +43,6 @@ const DB_CONFIG = [
 // кол-во отображаемых лотов на главной странице
 const LOTS_ON_INDEX = 9;
 // кол-во отображаемых лотов на страницу каталога и истории просмотренных лотов в профиле пользователя
-const LOTS_ON_PAGE = 3;
+const LOTS_ON_PAGE = 6;
 
 $JS = array();
