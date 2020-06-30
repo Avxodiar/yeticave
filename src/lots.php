@@ -27,10 +27,9 @@ function getCategories()
 
 /**
  * Получение списка новых лотов для главной страницы с не истекшим сроком публикации
- * @param int $count
  * @return array
  */
-function getNewLots(int $count = 9)
+function getNewLots()
 {
     $sql = 'SELECT lots.id, lots.name, categories.name AS `category`, lots.price_start AS `price`,
                 lots.price_rate, lots.price_step, lots.image_url AS `pict`, lots.description
@@ -38,7 +37,7 @@ function getNewLots(int $count = 9)
             LEFT JOIN `categories` ON lots.category_id = categories.id
             WHERE lots.active = 1 AND lots.data_finish > NOW()
             ORDER BY `data_start` DESC
-            LIMIT ' . $count;
+            LIMIT ' . LOTS_ON_INDEX;
     $DB = new database();
     $lots = $DB->query($sql);
 
@@ -46,11 +45,30 @@ function getNewLots(int $count = 9)
 }
 
 /**
+ * Получение количества лотов в указанной категории
+ * @param int $id
+ * @return int
+ */
+function getLotsCategoryCount(int $id)
+{
+    $sql = 'SELECT COUNT(*) AS CNT FROM `lots`
+            WHERE lots.category_id = ? AND active = 1 and data_finish > NOW()';
+
+    $DB = new database();
+    $DB->prepareQuery($sql, [$id]);
+    $data = $DB->getAssocResult();
+
+    return $data['CNT'] ?? 0;
+}
+
+/**
  * Получение списка лотов для указанной категории
  * @param int $id
+ * @param int $limit
+ * @param int $offset
  * @return array|bool
  */
-function getCategoryLots(int $id)
+function getCategoryLots(int $id, $limit = 0, $offset = 0)
 {
     $categories = getCategories();
     if(!isset($categories[$id])) {
@@ -63,6 +81,9 @@ function getCategoryLots(int $id)
             LEFT JOIN `categories` ON lots.category_id = categories.id
             WHERE lots.active = 1 AND lots.category_id = ? AND lots.data_finish > NOW()
             ORDER BY `data_start` DESC';
+    if ($limit) {
+        $sql .= " LIMIT {$limit} OFFSET {$offset}";
+    }
 
     $DB = new database();
     $DB->prepareQuery($sql, [$id]);
@@ -102,11 +123,34 @@ function addLot($data)
 }
 
 /**
- * Получение списка лотов по их id
+ * Кол-во активных лотов из указанного списка
  * @param array $ids
+ * @return int
+ */
+function getLotsCount(array $ids)
+{
+    if(empty($ids)) {
+        return 0;
+    }
+    $listId = str_repeat(', ?', count($ids)-1);
+    $sql = "SELECT COUNT(*) AS CNT FROM `lots`
+            WHERE id in (?{$listId}) AND active = 1 and data_finish > NOW()";
+
+    $DB = new database();
+    $DB->prepareQuery($sql, $ids);
+    $data = $DB->getAssocResult();
+
+    return $data['CNT'] ?? 0;
+}
+
+/**
+ * Получение списка активных лотов по их id
+ * @param array $ids
+ * @param int   $limit
+ * @param int   $offset
  * @return array
  */
-function getLots(array $ids)
+function getLots(array $ids, $limit = 0, $offset = 0)
 {
     if(empty($ids)) {
         return [[]];
@@ -117,6 +161,9 @@ function getLots(array $ids)
             FROM `lots`
             LEFT JOIN `categories` ON lots.category_id = categories.id
             WHERE lots.id in (?{$listId}) AND lots.active = 1 and lots.data_finish > NOW()";
+    if ($limit) {
+        $sql .= " LIMIT {$limit} OFFSET {$offset}";
+    }
 
     $DB = new database();
     $DB->prepareQuery($sql, $ids);

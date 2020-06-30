@@ -1,5 +1,7 @@
   <section class="rates container">
-    <h2>Мои ставки</h2>
+    <h2>
+      <a href="/profile.php">Профиль</a>&nbsp;<span>&raquo;</span>&nbsp;Мои ставки
+    </h2>
     <?php if(!empty($error)):?>
       <p class="lot__title">
           У вас нет ставок

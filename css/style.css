@@ -281,6 +281,10 @@ h2 {
 .profile .info h3 {
   margin-top: 0;
 }
+.profile .info a {
+  color: #45abde;
+  font-weight: bold;
+}
 
 /* Футер */
 
@@ -1133,6 +1137,16 @@ input:invalid .form__error{
 
 .rates h2 {
   padding-bottom: 24px;
+}
+
+.lots h2.profile a,
+.rates h2 a {
+  color: #45abde;
+}
+
+.lots h2.profile span,
+.rates h2 span {
+  color: #879296;
 }
 
 .rates__list {

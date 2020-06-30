@@ -1,5 +1,7 @@
 <section class="lots">
-  <h2>История просмотров</h2>
+  <h2 class="profile">
+    <a href="/profile.php">Профиль</a>&nbsp;<span>&raquo;</span>&nbsp;История просмотров
+  </h2>
 
     <?php
     if(count($lots)) { ?>
@@ -37,12 +39,18 @@
         ?>
         </ul>
         <ul class="pagination-list">
-            <li class="pagination-item pagination-item-prev"><a>Назад</a></li>
-            <li class="pagination-item pagination-item-active"><a>1</a></li>
-            <li class="pagination-item"><a href="#">2</a></li>
-            <li class="pagination-item"><a href="#">3</a></li>
-            <li class="pagination-item"><a href="#">4</a></li>
-            <li class="pagination-item pagination-item-next"><a href="#">Вперед</a></li>
+            <li class="pagination-item pagination-item-prev"><a <?=$backHref?>>Назад</a></li>
+        <?php
+        for($i = 1; $i <= $pages; $i++)
+        {
+          if( $curPage === $i):?>
+            <li class="pagination-item pagination-item-active"><a><?=$i?></a></li>
+          <?php else: ?>
+             <li class="pagination-item"><a href="<?=$uri.$i?>"><?=$i?></a></li>
+          <?php endif;
+        }
+        ?>
+            <li class="pagination-item pagination-item-next"><a <?=$forwardHref?>>Вперед</a></li>
         </ul>
         <?php
     } else { ?>
