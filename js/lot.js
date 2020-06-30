@@ -22,7 +22,7 @@ betForm.addEventListener('submit', function (evt) {
     }
 
     window.backend.save(
-        '/bet.php',
+        '/lot.php',
         new FormData(betForm),
         function(response) {
 
@@ -43,7 +43,7 @@ betForm.addEventListener('submit', function (evt) {
             betHistory.querySelector('h3 > span').textContent = response['bets'].length;
             betTable.innerHTML = '';
 
-            response['bets'].forEach(function(item, i) {
+            response['bets'].forEach(function(item) {
                 let tr = document.createElement('tr');
                 tr.className = 'history__item';
                 tr.innerHTML = '<tr class="history__item"><td class="history__name">' + item['name'] +

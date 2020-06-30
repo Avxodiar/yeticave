@@ -1,21 +1,22 @@
 <?php
 namespace yeticave\user;
 
-use function yeticave\database\prepareStmt;
-use function yeticave\database\executeStmt;
-use function yeticave\database\getAssocResult;
+use yeticave\database;
 
 /**
  * Поиск пользователя по email
  * @param string $email
  * @return array
  */
-function searchByEmail(string $email) {
-    $sql = 'SELECT * FROM `users` WHERE `email` = ?';
-    $stmt = prepareStmt($sql);
-    executeStmt($stmt, [$email]);
+function searchByEmail(string $email)
+{
+    $DB = new database();
+    $DB->prepareQuery(
+        'SELECT * FROM `users` WHERE `email` = ?',
+        [$email]
+    );
 
-    return getAssocResult($stmt) ?? [];
+    return $DB->getAssocResult() ?? [];
 }
 
 /**
@@ -41,10 +42,10 @@ function add(array $fields) {
         $newFields[$key] = $fields[$key] ?? '';
     }
 
+    $DB = new database();
     $sql = 'INSERT INTO `users` (`name`, `email`, `password`, `created_at`, `about`, `avatar_url`) VALUES (?, ?, ?, NOW(), ?, ?)';
-    $stmt = prepareStmt($sql);
 
-    return executeStmt($stmt, $newFields, true);
+    return $DB->prepareQuery($sql, $newFields, true);
 }
 
 /**
@@ -52,12 +53,15 @@ function add(array $fields) {
  * @param int $id
  * @return array
  */
-function getInfo(int $id) {
-    $sql = 'SELECT * FROM `users` WHERE `id` = ?';
-    $stmt = prepareStmt($sql);
-    executeStmt($stmt, $id);
+function getInfo(int $id)
+{
+    $DB = new database();
+    $DB->prepareQuery(
+        'SELECT * FROM `users` WHERE `id` = ?',
+        [$id]
+    );
 
-    return getAssocResult($stmt) ?? [];
+    return $DB->getAssocResult() ?? [];
 }
 
 /**
@@ -111,7 +115,7 @@ function logout() {
  * @return int|bool
  */
 function getId() {
-    return $_SESSION['user_id'] ?? false;
+    return (int) $_SESSION['user_id'];
 }
 /**
  * Возвращает имя пользователя из данных сессии

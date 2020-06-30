@@ -1,11 +1,7 @@
 <?php
 namespace yeticave\lot;
 
-use function yeticave\database\query;
-use function yeticave\database\prepareStmt;
-use function yeticave\database\executeStmt;
-use function yeticave\database\getAssocResult;
-use function yeticave\database\transact;
+use yeticave\database;
 use function yeticave\user\getId;
 
 // список основных категорий лотов
@@ -17,9 +13,10 @@ const LOT_FIELDS = ['name', 'category', 'pict', 'alt', 'price', 'minPrice', 'tim
  * Список категорий лотов
  * @return array|bool|null
  */
-function getCategories() {
-    $sql = 'SELECT * FROM categories ORDER BY ID ASC';
-    $res = query($sql);
+function getCategories()
+{
+    $DB = new database();
+    $res = $DB->query('SELECT * FROM categories ORDER BY ID ASC');
 
     $cats = [];
     foreach ($res as $elem) {
@@ -33,7 +30,8 @@ function getCategories() {
  * @param int $count
  * @return array
  */
-function getNewLots(int $count = 9) {
+function getNewLots(int $count = 9)
+{
     $sql = 'SELECT lots.id, lots.name, categories.name AS `category`, lots.price_start AS `price`,
                 lots.price_rate, lots.price_step, lots.image_url AS `pict`, lots.description
             FROM `lots`
@@ -41,7 +39,8 @@ function getNewLots(int $count = 9) {
             WHERE lots.active = 1 AND lots.data_finish > NOW()
             ORDER BY `data_start` DESC
             LIMIT ' . $count;
-    $lots = query($sql);
+    $DB = new database();
+    $lots = $DB->query($sql);
 
     return check($lots);
 }
@@ -51,8 +50,8 @@ function getNewLots(int $count = 9) {
  * @param int $id
  * @return array|bool
  */
-function getCategoryLots(int $id) {
-
+function getCategoryLots(int $id)
+{
     $categories = getCategories();
     if(!isset($categories[$id])) {
         return false;
@@ -65,9 +64,9 @@ function getCategoryLots(int $id) {
             WHERE lots.active = 1 AND lots.category_id = ? AND lots.data_finish > NOW()
             ORDER BY `data_start` DESC';
 
-    $stmt = prepareStmt($sql);
-    executeStmt($stmt, [$id]);
-    $lots = getAssocResult($stmt, true) ?? [];
+    $DB = new database();
+    $DB->prepareQuery($sql, [$id]);
+    $lots = $DB->getAssocResult(true) ?? [];
 
     return check($lots);
 }
@@ -77,7 +76,8 @@ function getCategoryLots(int $id) {
  * @param $data
  * @return bool|int
  */
-function addLot($data) {
+function addLot($data)
+{
     if(empty($data)) {
         return false;
     }
@@ -95,9 +95,10 @@ function addLot($data) {
     $sql = 'INSERT INTO `lots`
     (`name`, `category_id`, `user_id`, `image_url`, `data_start`, `data_finish`, `price_start`, `price_rate`, `price_step`, `description`)
     VALUES (?, ?, ?, ?, NOW(), ?, ?, 0, ?, ?)';
-    $stmt = prepareStmt($sql);
 
-    return executeStmt($stmt, $fields, true);
+    $DB = new database();
+
+    return $DB->prepareQuery($sql, $fields, true);
 }
 
 /**
@@ -105,7 +106,8 @@ function addLot($data) {
  * @param array $ids
  * @return array
  */
-function getLots(array $ids) {
+function getLots(array $ids)
+{
     if(empty($ids)) {
         return [[]];
     }
@@ -116,10 +118,10 @@ function getLots(array $ids) {
             LEFT JOIN `categories` ON lots.category_id = categories.id
             WHERE lots.id in (?{$listId}) AND lots.active = 1 and lots.data_finish > NOW()";
 
-    $stmt = prepareStmt($sql);
-    executeStmt($stmt, $ids);
+    $DB = new database();
+    $DB->prepareQuery($sql, $ids);
 
-    $lots = getAssocResult($stmt, true) ?? [];
+    $lots = $DB->getAssocResult(true) ?? [];
 
     return check($lots);
 }
@@ -129,18 +131,19 @@ function getLots(array $ids) {
  * @param string $search
  * @return array|null
  */
-function search(string $search) {
-    //searchIndex();
+function search(string $search)
+{
     $sql =  'SELECT lots.id, lots.name, categories.name AS `category`, lots.price_start AS `price`,
                 lots.price_rate, lots.price_step, lots.image_url AS `pict`, lots.description
             FROM `lots`
             LEFT JOIN `categories` ON lots.category_id = categories.id
             WHERE lots.active = 1 AND lots.data_finish > NOW() AND
                   MATCH(lots.name, description) AGAINST(?)';
-    $stmt = prepareStmt($sql);
-    executeStmt($stmt, [$search]);
 
-    $data = getAssocResult($stmt, true) ?? [];
+    $DB = new database();
+    $DB->prepareQuery($sql, [$search]);
+
+    $data = $DB->getAssocResult(true) ?? [];
 
     return check($data);
 }
@@ -151,7 +154,8 @@ function search(string $search) {
  * @param array $data - массив со списком лотов
  * @return array
  */
-function check(array $data) {
+function check(array $data)
+{
     array_walk($data, '\yeticave\lot\checkFields');
     foreach ($data as $key => &$lot) {
         $lot['name'] = html_entity_decode($lot['name']);
@@ -162,7 +166,7 @@ function check(array $data) {
         $lot['price_rate'] = (int) $lot['price_rate'];
         $lot['price_step'] = (int) $lot['price_step'];
 
-        $minPrice = ($lot['price_rate'] == 0) ? $lot['price'] :
+        $minPrice = ($lot['price_rate'] === 0) ? $lot['price'] :
             $lot['price'] + (floor( ($lot['price_rate'] - $lot['price']) / $lot['price_step'] ) + 1) * $lot['price_step'];
 
         $lot['minPrice'] = $minPrice;
@@ -178,8 +182,8 @@ function check(array $data) {
  * Дополняет массив с лотом отсутсвующими ключами в соответствии со списком полей ($lotFields)
  * @param $value
  */
-function checkFields(&$value) {
-    global $lotFields;
+function checkFields(&$value)
+{
     $diffArray = array_diff_key(array_fill_keys(LOT_FIELDS, ''), $value);
     $value = array_merge($value, $diffArray);
 }
@@ -190,7 +194,8 @@ function checkFields(&$value) {
  * @param int $cost
  * @return int|bool
  */
-function addBet(int $lotId, int $cost) {
+function addBet(int $lotId, int $cost)
+{
     $userId = getId();
 
     $queries = [
@@ -205,7 +210,8 @@ function addBet(int $lotId, int $cost) {
       ],
     ];
 
-    $result = transact($queries);
+    $DB = new database();
+    $result = $DB->transact($queries);
 
     //$result[0] - id добавленной записи ставки
     //$result[1] - удалось ли обновить лот
@@ -223,10 +229,10 @@ function getBets(int $lotId) {
             JOIN users u ON b.user_id = u.id
             WHERE lot_id = ? ORDER BY ID DESC';
 
-    $stmt = prepareStmt($sql);
-    executeStmt($stmt, [$lotId]);
+    $DB = new database();
+    $DB->prepareQuery($sql, [$lotId]);
 
-    $data = getAssocResult($stmt, true) ?? [];
+    $data = $DB->getAssocResult(true) ?? [];
 
     //форматирование ставок
     foreach ($data as &$bet) {
@@ -236,76 +242,6 @@ function getBets(int $lotId) {
 
     return $data;
 }
-
-/**
- * Форматирование суммы лота в соответсвии со спецификацией:
- * {
- *   Функция принимает один аргумент - целое число.
- *   Функция возвращает результат - отформатированную сумму вместе со знаком рубля.
- *   Как должна работать функция:
- *   1. Округлить число до целого использую функцию ceil()
- *   2. Если переданное число меньше 1000, то оставить как есть
- *   3. Если число больше 1000, то отделить пробелом 3 последних цифры от остальной части суммы
- *   Пример: заменить 54999 на 54 999
- *   4. Добавить к получившейся строке пробел и знак рубля.
- * }
- * @todo Уточнить TЗ - округление целого числа; не указаны действия если число ровно 1000 и хранение элементов вёрстки!
- *
- * @param  int    $price - стоимость лота, целое число
- * @param  bool   $rub   - сверстанный или текстовый символ рубля
- * @return string
- */
-function priceFormat($price, $rub = true) {
-    $priceFormat = (int) ceil($price);
-    if($priceFormat > 1000) {
-        $priceFormat = number_format($priceFormat, 0, '', ' ');
-    }
-    $priceFormat .= ($rub) ? ' <b class="rub">р</b>' : ' р';
-
-    return $priceFormat;
-}
-
-/**
- * Форматирование вывода времени
- * @param int $timestamp
- * @return false|string
- */
-function timeFormat(int $timestamp) {
-    $ts = '';
-    $timeDiff = time() - $timestamp;
-
-    // для вывода на странице лота времени в истории ставок
-    if($timeDiff >= 0) {
-        if ($timeDiff < 7000) {
-            $timeDiff = floor($timeDiff / 60);
-            $ts = ($timeDiff > 60) ? 'Час назад' : $timeDiff . ' минут назад';
-        } else {
-            $ts = gmdate('y.m.d в H:i', $timestamp);
-        }
-    }
-    // для вывода на страницах профиля пользователя в списках лотов и ставок
-    else {
-        $timeDiff = abs($timeDiff);
-        if ($timeDiff > 86400) {
-            $ts = gmdate('dд Hч iм', $timeDiff);
-        } else {
-            $ts = gmdate('H:i:s', $timeDiff);
-        }
-    }
-    return $ts;
-}
-
-/**
- * Сколько осталось времени до начала новых суток
- * @return string - формат вывода "ЧЧ:МM"
- */
-function getLeftMidnight() {
-    $midnight = mktime(0, 0, 0, date('n'), date('j') + 1, date('Y'));
-    $left = $midnight - time();
-
-    return gmdate('H:i', $left);
-}
-
 
 /**
  * Сохранение просмотренного лота в историю
@@ -339,9 +275,9 @@ function getUserLotCount() {
 
     $sql = 'SELECT COUNT(*) AS CNT FROM lots WHERE user_id = ?';
 
-    $stmt = prepareStmt($sql);
-    executeStmt($stmt, [$userId]);
-    $data = getAssocResult($stmt);
+    $DB = new database();
+    $DB->prepareQuery($sql, [$userId]);
+    $data = $DB->getAssocResult();
 
     return $data['CNT'] ?? 0;
 }
@@ -355,9 +291,9 @@ function getUserBetCount() {
 
     $sql = 'SELECT count(DISTINCT lot_id) AS CNT FROM bids WHERE user_id = ?';
 
-    $stmt = prepareStmt($sql);
-    executeStmt($stmt, [$userId]);
-    $data = getAssocResult($stmt);
+    $DB = new database();
+    $DB->prepareQuery($sql, [$userId]);
+    $data = $DB->getAssocResult();
 
     return $data['CNT'] ?? 0;
 };
@@ -378,12 +314,11 @@ function getUserLots(){
             GROUP BY l.id
             ORDER BY l.id DESC';
 
-    $stmt = prepareStmt($sql);
-    executeStmt($stmt, [$userId]);
+    $DB = new database();
+    $DB->prepareQuery($sql, [$userId]);
 
-    $data = getAssocResult($stmt, true) ?? [];
+    $data = $DB->getAssocResult(true) ?? [];
 
-    $lots = [];
     foreach ($data as &$lot) {
         $lot['tsFinish'] = timeFormat( $lot['dt_finish'] );
         $priceStart = (int) ceil($lot['price_start']);
@@ -411,29 +346,27 @@ function getUserBets() {
     $userId = getId();
 
     $sql = 'SELECT MAX(b.id) AS id, b.lot_id, MAX(UNIX_TIMESTAMP(b.data_insert)) data_insert, MAX(b.sum) price,
-                l.name, l.image_url, l.description, c.name cat_name, l.price_rate, l.winner_id, l.active, UNIX_TIMESTAMP(l.data_finish) data_finish
+                l.name, l.image_url, l.description, c.name cat_name, l.price_rate, l.winner_id, l.active,
+                UNIX_TIMESTAMP(l.data_finish) data_finish
             FROM bids b
             JOIN lots l ON l.id = b.lot_id
             JOIN categories c ON c.id = l.category_id
             WHERE b.user_id = ?
             GROUP BY b.lot_id';
 
-    $stmt = prepareStmt($sql);
-    executeStmt($stmt, [$userId]);
+    $DB = new database();
+    $DB->prepareQuery($sql, [$userId]);
 
-    $data = getAssocResult($stmt, true) ?? [];
+    $res = $DB->getAssocResult(true) ?? [];
 
     $lots = [];
-    foreach ($data as &$bet) {
+    $data = [];
+    foreach ($res as $bet) {
         $bet['tsInsert'] = timeFormat( $bet['data_insert'] );
         $bet['tsFinish'] = timeFormat( $bet['data_finish'] );
         $priceFormat = (int) ceil($bet['price']);
         $bet['price'] = number_format($priceFormat, 0, '', ' ');
 
-        /*$bet['status'] = ($bet['winner_id'] === $userId ) ? 'win' : '';
-        if(!$bet['status'] && time() > $bet['data_finish'] ) {
-            $bet['status'] = 'end';
-        }*/
         $bet['status'] = '';
         $lotId = (int) $bet['lot_id'];
         // если лот завершен
@@ -451,9 +384,13 @@ function getUserBets() {
         else {
             $lots[] = $lotId;
         }
-
+        // собираем ставки по их id
+        $data[ $bet['id']] = $bet;
     }
-    unset($bet);
+    unset($res);
+
+    //сортируем список ставок - новые должны показываться первыми
+    krsort($data);
 
     /*  Определение "перебитых" ставок
     * Реализуется отдельным запросом, т.к. при большом кол-ве лотов и ставок,
@@ -465,9 +402,10 @@ function getUserBets() {
             WHERE lot_id IN (?{$listId}) AND
             id IN ( SELECT MAX(id) FROM bids GROUP BY lot_id)";
 
-        $stmt = prepareStmt($sql);
-        executeStmt($stmt, $lots);
-        $bids = getAssocResult($stmt, true) ?? [];
+        $DB = new database();
+        $DB->prepareQuery($sql, $lots);
+
+        $bids = $DB->getAssocResult(true) ?? [];
 
         $bidList = [];
         //список ставок по id лоту с пользователем сделавшего последнюю ставку
@@ -484,7 +422,7 @@ function getUserBets() {
         foreach ($data as &$bet) {
             $lotId = (int) $bet['lot_id'];
             if( isset($bidList[ $lotId ])) {
-                $bet['process'] = (bool) ($bidList[ $lotId ]['user_id'] === $userId);
+                $bet['process'] = ($bidList[ $lotId ]['user_id'] === $userId);
             }
         }
     }
@@ -502,18 +440,17 @@ function checkLotWinner(int $lotId) {
 
     $sql = 'SELECT user_id FROM bids WHERE id = (SELECT MAX(id) FROM bids WHERE lot_id = ?)';
 
-    $stmt = prepareStmt($sql);
-    executeStmt($stmt, [$lotId]);
-    $data = getAssocResult($stmt);
+    $DB = new database();
+    $DB->prepareQuery($sql, [$lotId]);
+
+    $data = $DB->getAssocResult();
 
     $winUserId = $data['user_id'] ?? NULL;
     if($winUserId) {
         $sql= 'UPDATE lots SET winner_id = ? WHERE id = ?';
-        $stmt = prepareStmt($sql);
-        $res = executeStmt($stmt, [$winUserId, $lotId]);
 
         // проверяем что обновление удалось
-        if(!$res) {
+        if ( !$DB->prepareQuery($sql, [$winUserId, $lotId]) ) {
             return false;
         }
     }

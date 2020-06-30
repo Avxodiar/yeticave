@@ -3,7 +3,6 @@ require_once 'src/init.php';
 
 use function yeticave\user\isAuth;
 use function yeticave\lot\getLots;
-use function yeticave\lot\check;
 use function yeticave\lot\addLotHistory;
 use function yeticave\lot\addBet;
 use function yeticave\lot\getBets;
@@ -22,13 +21,13 @@ function checkAjax() {
     }
 
     //id лота указано не верно
-    $lotId = (int) ($_POST['lot'] ?? 0);
+    $lotId = isset($_POST['lot']) ? (int) $_POST['lot'] : 0;
     if(!$lotId) {
         http_response_code(400);
     }
 
     // не верно указана ставка
-    $cost = (int) ($_POST['cost'] ?? 0);
+    $cost = isset($_POST['cost']) ? (int) $_POST['cost'] : 0;
     if(!$cost) {
         http_response_code(412);
     }
@@ -45,9 +44,9 @@ function checkAjax() {
     }
 
     //добавляем ставку
-    $res = addBet($lotId, $cost);
-    if($res) {
+    if ( addBet($lotId, $cost) ) {
         //получаем новые данные по лоту
+
         $lot = current(getLots([$lotId]));
         $data = [
             'lot' => $lot,
@@ -56,10 +55,12 @@ function checkAjax() {
             'minPriceFormat' => $lot['minPriceFormat'],
             'bets' => getBets($lotId)
         ];
-    } else {
-        http_response_code(503);
+
+        echo json_encode($data);
+        exit();
     }
-    echo json_encode($data);
+
+    http_response_code(503);
     exit();
 }
 

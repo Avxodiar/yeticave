@@ -1,136 +1,159 @@
 <?php
-namespace yeticave\database;
+namespace yeticave;
 
-/**
- * Установка соединения с БД
- */
-try{
-    $mysqli = new \mysqli(DB_CONFIG['host'], DB_CONFIG['user'], DB_CONFIG['password'], DB_CONFIG['database']);
-    $mysqli->set_charset('utf8');
-} catch (\Exception $e) {
-    errorLog("Ошибка подключения к БД ({$e->getCode()}) {$e->getMessage()}");
-    errorPage(500);
-}
+use mysqli;
+use Exception;
 
-/**
- * Подготовка запроса
- * @param string $sql
- * @return \mysqli_stmt
- */
-function prepareStmt(string $sql) {
-    global $mysqli;
-    $stmt = $mysqli->prepare($sql);
-    if (!$stmt) {
-        error('Не удалось подготовить запрос:');
-    }
-    return $stmt;
-}
+class database
+{
+    // ресурс соединения с бд
+    private $dbResource;
+    // подготовленный запрос
+    private $stmt;
 
-/**
- * Выполнение подготовленного запроса по привязанным параметрам
- * @param \mysqli_stmt $stmt
- * @param              $params
- * @param bool         $insert
- * @return int|string
- */
-function executeStmt(\mysqli_stmt $stmt, $params, $insert = false) {
-    global $mysqli;
-
-    $keys = '';
-    $vars = [];
-    $types = [
-        'integer' => 'i',
-        'string' => 's',
-        'double' => 'd'
-    ];
-
-    foreach ($params as $key => $param) {
-        $type = $types[ gettype($param) ] ?? null;
-        if($type) {
-            $keys .= $type;
-            $vars[] = ($key === 'password') ? $param : mysqli_real_escape_string($mysqli, $param);
+    public function __construct()
+    {
+        // Установка соединения с БД
+        try
+        {
+            $this->dbResource = new mysqli(DB_CONFIG['host'], DB_CONFIG['user'], DB_CONFIG['password'], DB_CONFIG['database']);
+            $this->dbResource->set_charset('utf8');
+        }
+        catch (Exception $e)
+        {
+            $this->error('Ошибка подключения к БД.');
         }
     }
 
-    if (!$stmt->bind_param($keys, ...$vars)) {
-        error('Не удалось привязать параметры:');
-        return false;
+    /**
+     * Выполнение подготовленного запроса по привязанным параметрам
+     * @param string $sql
+     * @param        $params
+     * @param bool   $insert
+     * @return bool|int|string
+     */
+    public function prepareQuery(string $sql, $params, $insert = false) {
+
+        $this->stmt = $this->dbResource->prepare($sql);
+        if (!$this->stmt)
+        {
+            $this->error("Не удалось подготовить запрос: ( {$sql} )");
+        }
+
+        // формируем ключи и параметры для привязки их к подготавливаемому запросу
+        $keys = '';
+        $vars = [];
+        $types = [
+            'integer' => 'i',
+            'string' => 's',
+            'double' => 'd'
+        ];
+        foreach ($params as $key => $param)
+        {
+            $type = $types[ gettype($param) ] ?? null;
+            if ($type)
+            {
+                $keys .= $type;
+                $vars[] = ($key === 'password') ? $param : mysqli_real_escape_string($this->dbResource, $param);
+            }
+        }
+
+        if (!$this->stmt->bind_param($keys, ...$vars))
+        {
+            $this->error('Не удалось привязать параметры.');
+        }
+
+        $res = $this->stmt->execute();
+        if (!$res)
+        {
+            $this->error('Не удалось выполнить подготовленный запрос.');
+        }
+
+        return ($insert) ? mysqli_insert_id($this->dbResource) : $res;
     }
 
-    $res = $stmt->execute();
-    if (!$res) {
-        error('Не удалось выполнить запрос:');
-        return false;
+    /**
+     * Выполнение нескольких запросов с транзакцией
+     * @param array $queries
+     * @return array|bool
+     */
+    public function transact(array $queries)
+    {
+        $this->dbResource->begin_transaction();
+
+        $results = [];
+        foreach ($queries as $id => $query)
+        {
+            $sql = $query['sql'];
+            $fields = $query['fields'];
+            $insert = (bool) ($query['insert'] ?? 0);
+
+            $res = $this->prepareQuery($sql, $fields, $insert);
+            if($res) {
+                $results[$id] = $res;
+            } else {
+                $this->dbResource->rollback();
+                $this->error("Откат транзакции при выполнении запроса ( {$sql} ).");
+                $this->stmt = null;
+
+                return false;
+            }
+        }
+
+        $this->dbResource->commit();
+        $this->stmt = null;
+
+        return $results;
     }
 
-    return ($insert) ? mysqli_insert_id($mysqli) : $res;
-}
+    /**
+     * Получение результата выполнения подготовленного запроса
+     * @param bool $all - возвращать все результаты
+     * @return array|mixed
+     */
+    public function getAssocResult($all = false)
+    {
+        if( $this->stmt === null) {
+            $this->error('Попытка выполнения неподготовленного запроса');
+        }
 
-function transact(array $queries) {
-    global $mysqli;
+        $res = $this->stmt->get_result();
+        if(!$res)
+        {
+            $this->error('Ошибка получения результата подготовленного запроса.');
+        }
 
-    mysqli_begin_transaction($mysqli);
+        return ($all) ? $res->fetch_all(MYSQLI_ASSOC) : $res->fetch_assoc();
+    }
 
-    $results = [];
-    foreach ($queries as $id => $query) {
-        $sql = $query['sql'];
-        $fields = $query['fields'];
-        $insert = (bool) ($query['insert'] ?? 0);
-
-        $stmt = prepareStmt($sql);
-        $res = executeStmt($stmt, $fields, $insert);
-        if($res) {
-            $results[$id] = $res;
-        } else {
-            mysqli_rollback($mysqli);
+    /**
+     * Получение данных из базы
+     * Важно: только для безопасных запросов!
+     * @param string $sql
+     * @return array|bool|null
+     */
+    public function query(string $sql)
+    {
+        if (empty($sql))
+        {
             return false;
         }
-    }
 
-    mysqli_commit($mysqli);
+        $result = mysqli_query($this->dbResource, $sql);
+        if (!$result) {
+            $this->error("Ошибка выполнения запроса ( {$sql} )");
+        }
 
-    return $results;
-}
-
-/**
- * Получение результата выполнения подготовленного запроса
- * @param \mysqli_stmt $stmt
- * @param bool         $all - все результаты
- * @return array|mixed|null
- */
-function getAssocResult(\mysqli_stmt $stmt, $all = false){
-    $res = $stmt->get_result();
-
-    return ($all) ? $res->fetch_all(MYSQLI_ASSOC) : $res->fetch_assoc();
-}
-
-/**
- * Получение данных из базы
- * только для безопасных запросов!
- * @param string $sql
- * @return array|bool|null
- */
-function query(string $sql) {
-    if(empty($sql)) {
-        return false;
-    }
-
-    global $mysqli;
-    $result = mysqli_query($mysqli, $sql);
-    if ($result) {
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    $error = mysqli_error($mysqli);
-    error('Ошибка выполнения запроса:' . $error);
-    return false;
-}
-
-/**
- * Обработка ошибок
- * @param $text
- */
-function error($text) {
-    global $mysqli;
-    die("{$text} ({$mysqli->errno}) {$mysqli->error}");
+    /**
+     * Обработка ошибок
+     * @param $text
+     */
+    private function error($text) : void
+    {
+        errorLog( "{$text} ({$this->dbResource->errno} : {$this->dbResource->error} )");
+        errorPage(500);
+    }
 }

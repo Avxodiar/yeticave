@@ -1,11 +1,12 @@
 <?php
 require_once 'src/init.php';
 
+use function yeticave\lot\getCategories;
 use function yeticave\lot\getCategoryLots;
 
 $id = (int)$_GET['id'];
 
-$categories = \yeticave\lot\getCategories();
+$categories = getCategories();
 if(!$id || !isset($categories[$id])) {
     errorPage(404);
 }
