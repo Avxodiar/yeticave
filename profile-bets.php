@@ -2,7 +2,7 @@
 require_once 'src/init.php';
 
 use function yeticave\user\isAuth;
-use function \yeticave\lot\getUserBets;
+use function yeticave\lot\getUserBets;
 
 if(!isAuth()) {
     header('Location: /login.php');

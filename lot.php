@@ -2,10 +2,7 @@
 require_once 'src/init.php';
 
 use function yeticave\user\isAuth;
-use function yeticave\lot\getLots;
-use function yeticave\lot\addLotHistory;
-use function yeticave\lot\addBet;
-use function yeticave\lot\getBets;
+use function yeticave\lot\{getLots, addLotHistory, addBet, getBets};
 
 function checkAjax() {
     $referer = $_SERVER['HTTP_REFERER'] ?? '';

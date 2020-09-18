@@ -2,9 +2,7 @@
 require_once 'src/init.php';
 
 use function yeticave\user\isAuth;
-use function yeticave\lot\getLotHistory;
-use function yeticave\lot\getLots;
-use function yeticave\lot\getLotsCount;
+use function yeticave\lot\{getLotHistory, getLotsCount, getLots};
 
 if(!isAuth()) {
     errorPage(403);
@@ -25,7 +23,7 @@ if($pageId === 0) {
 }
 // если указана страница больше максимальной, то показываем последнюю
 $uri = $_SERVER['PHP_SELF'] . '?page=';
-if($pageId > $pages) {
+if($count && $pageId > $pages) {
     header('Location: ' . $uri . $pages);
     exit();
 };

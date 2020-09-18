@@ -1,14 +1,9 @@
 <?php
 require_once 'src/init.php';
 require_once 'src/form.php';
-require_once 'src/database.php';
 
 use function yeticave\form\isValidMail;
-use function yeticave\user\searchByEmail;
-use function yeticave\user\checkPassword;
-use function yeticave\user\auth;
-use function yeticave\user\isAuth;
-use function yeticave\user\getName;
+use function yeticave\user\{auth, isAuth, getName, searchByEmail, checkPassword};
 
 $email = '';
 $errors = [];

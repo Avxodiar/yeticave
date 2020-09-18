@@ -3,7 +3,7 @@ require_once 'src/init.php';
 
 use function yeticave\user\isAuth;
 use function yeticave\file\getShortSize;
-use function \yeticave\lot\getCategories;
+use function yeticave\lot\getCategories;
 
 if(!isAuth()) {
     errorPage(403);

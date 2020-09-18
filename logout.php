@@ -1,8 +1,7 @@
 <?php
 require_once 'src/init.php';
 
-use function yeticave\user\isAuth;
-use function yeticave\user\logout;
+use function yeticave\user\{isAuth,logout};
 
 if(!isAuth()) {
     header('Location: /login.php');

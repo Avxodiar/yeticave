@@ -5,8 +5,7 @@ require_once 'src/file.php';
 
 use function yeticave\form\validate as formValidate;
 use function yeticave\file\upload as fileUpload;
-use function yeticave\user\isAuth as isUserAuth;
-use function yeticave\user\add as addUser;
+use function yeticave\user\{isAuth as isUserAuth, add as addUser};
 
 if(isUserAuth()) {
     header('Location: /logout.php');

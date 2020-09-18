@@ -1,7 +1,5 @@
 <?php
-use function yeticave\user\isAuth;
-use function yeticave\user\getName;
-use function yeticave\user\getAvatar;
+use function yeticave\user\{isAuth, getName, getAvatar};
 use function yeticave\lot\getCategories;
 
 /**

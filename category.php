@@ -1,9 +1,7 @@
 <?php
 require_once 'src/init.php';
 
-use function yeticave\lot\getCategories;
-use function yeticave\lot\getLotsCategoryCount;
-use function yeticave\lot\getCategoryLots;
+use function yeticave\lot\{getLotsCategoryCount, getCategories, getCategoryLots};
 
 $id = (int)$_GET['id'];
 
@@ -27,7 +25,7 @@ if($pageId === 0) {
 }
 // если указана страница больше максимальной, то показываем последнюю
 $uri .= '&page=';
-if($pageId > $pages) {
+if($count && $pageId > $pages) {
     header('Location: ' . $uri . $pages);
     exit();
 };
