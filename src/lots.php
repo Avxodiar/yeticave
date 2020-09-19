@@ -1,7 +1,7 @@
 <?php
 namespace yeticave\lot;
 
-use yeticave\database;
+use yeticave\Database;
 use function yeticave\user\getId;
 
 // список основных категорий лотов
@@ -15,8 +15,7 @@ const LOT_FIELDS = ['name', 'category', 'pict', 'alt', 'price', 'minPrice', 'tim
  */
 function getCategories()
 {
-    $DB = new database();
-    $res = $DB->query('SELECT * FROM categories ORDER BY ID ASC');
+    $res = Database::getInstance()->query('SELECT * FROM categories ORDER BY ID ASC');
 
     $cats = [];
     foreach ($res as $elem) {
@@ -38,8 +37,8 @@ function getNewLots()
             WHERE lots.active = 1 AND lots.data_finish > NOW()
             ORDER BY `data_start` DESC
             LIMIT ' . LOTS_ON_INDEX;
-    $DB = new database();
-    $lots = $DB->query($sql);
+
+    $lots = Database::getInstance()->query($sql);
 
     return check($lots);
 }
@@ -54,7 +53,7 @@ function getLotsCategoryCount(int $id)
     $sql = 'SELECT COUNT(*) AS CNT FROM `lots`
             WHERE lots.category_id = ? AND active = 1 and data_finish > NOW()';
 
-    $DB = new database();
+    $DB = Database::getInstance();
     $DB->prepareQuery($sql, [$id]);
     $data = $DB->getAssocResult();
 
@@ -85,7 +84,7 @@ function getCategoryLots(int $id, $limit = 0, $offset = 0)
         $sql .= " LIMIT {$limit} OFFSET {$offset}";
     }
 
-    $DB = new database();
+    $DB = Database::getInstance();
     $DB->prepareQuery($sql, [$id]);
     $lots = $DB->getAssocResult(true) ?? [];
 
@@ -103,23 +102,22 @@ function addLot($data)
         return false;
     }
     $fields = [
-        'name' => (string)$data['lot-name'],
-        'category_id' => (int)$data['category'],
-        'user_id' => (int)getId(),
-        'image_url' => (string)$data['lot-image'],
-        'data_finish' => (string)$data['lot-date'],
-        'price_start' => (int)$data['lot-rate'],
-        'price_step' => (int)$data['lot-step'],
-        'description' => (string)$data['message']
+        'name' => (string) $data['lot-name'],
+        'category_id' => (int) $data['category'],
+        'user_id' => (int) getId(),
+        'image_url' => (string) $data['lot-image'],
+        'data_finish' => (string) $data['lot-date'],
+        'price_start' => (int) $data['lot-rate'],
+        'price_step' => (int) $data['lot-step'],
+        'description' => (string) $data['message']
     ];
 
     $sql = 'INSERT INTO `lots`
     (`name`, `category_id`, `user_id`, `image_url`, `data_start`, `data_finish`, `price_start`, `price_rate`, `price_step`, `description`)
     VALUES (?, ?, ?, ?, NOW(), ?, ?, 0, ?, ?)';
 
-    $DB = new database();
 
-    return $DB->prepareQuery($sql, $fields, true);
+    return Database::getInstance()->prepareQuery($sql, $fields, true);
 }
 
 /**
@@ -136,7 +134,7 @@ function getLotsCount(array $ids)
     $sql = "SELECT COUNT(*) AS CNT FROM `lots`
             WHERE id in (?{$listId}) AND active = 1 and data_finish > NOW()";
 
-    $DB = new database();
+    $DB = Database::getInstance();
     $DB->prepareQuery($sql, $ids);
     $data = $DB->getAssocResult();
 
@@ -165,9 +163,8 @@ function getLots(array $ids, $limit = 0, $offset = 0)
         $sql .= " LIMIT {$limit} OFFSET {$offset}";
     }
 
-    $DB = new database();
+    $DB = Database::getInstance();
     $DB->prepareQuery($sql, $ids);
-
     $lots = $DB->getAssocResult(true) ?? [];
 
     return check($lots);
@@ -187,9 +184,8 @@ function search(string $search)
             WHERE lots.active = 1 AND lots.data_finish > NOW() AND
                   MATCH(lots.name, description) AGAINST(?)';
 
-    $DB = new database();
+    $DB = Database::getInstance();
     $DB->prepareQuery($sql, [$search]);
-
     $data = $DB->getAssocResult(true) ?? [];
 
     return check($data);
@@ -257,8 +253,7 @@ function addBet(int $lotId, int $cost)
       ],
     ];
 
-    $DB = new database();
-    $result = $DB->transact($queries);
+    $result = Database::getInstance()->transact($queries);
 
     //$result[0] - id добавленной записи ставки
     //$result[1] - удалось ли обновить лот
@@ -276,9 +271,8 @@ function getBets(int $lotId) {
             JOIN users u ON b.user_id = u.id
             WHERE lot_id = ? ORDER BY ID DESC';
 
-    $DB = new database();
+    $DB = Database::getInstance();
     $DB->prepareQuery($sql, [$lotId]);
-
     $data = $DB->getAssocResult(true) ?? [];
 
     //форматирование ставок
@@ -322,7 +316,7 @@ function getUserLotCount() {
 
     $sql = 'SELECT COUNT(*) AS CNT FROM lots WHERE user_id = ?';
 
-    $DB = new database();
+    $DB = Database::getInstance();
     $DB->prepareQuery($sql, [$userId]);
     $data = $DB->getAssocResult();
 
@@ -338,7 +332,7 @@ function getUserBetCount() {
 
     $sql = 'SELECT count(DISTINCT lot_id) AS CNT FROM bids WHERE user_id = ?';
 
-    $DB = new database();
+    $DB = Database::getInstance();
     $DB->prepareQuery($sql, [$userId]);
     $data = $DB->getAssocResult();
 
@@ -361,9 +355,8 @@ function getUserLots(){
             GROUP BY l.id
             ORDER BY l.id DESC';
 
-    $DB = new database();
+    $DB = Database::getInstance();
     $DB->prepareQuery($sql, [$userId]);
-
     $data = $DB->getAssocResult(true) ?? [];
 
     foreach ($data as &$lot) {
@@ -401,9 +394,8 @@ function getUserBets() {
             WHERE b.user_id = ?
             GROUP BY b.lot_id';
 
-    $DB = new database();
+    $DB = Database::getInstance();
     $DB->prepareQuery($sql, [$userId]);
-
     $res = $DB->getAssocResult(true) ?? [];
 
     $lots = [];
@@ -449,9 +441,8 @@ function getUserBets() {
             WHERE lot_id IN (?{$listId}) AND
             id IN ( SELECT MAX(id) FROM bids GROUP BY lot_id)";
 
-        $DB = new database();
+        $DB = Database::getInstance();
         $DB->prepareQuery($sql, $lots);
-
         $bids = $DB->getAssocResult(true) ?? [];
 
         $bidList = [];
@@ -487,9 +478,8 @@ function checkLotWinner(int $lotId) {
 
     $sql = 'SELECT user_id FROM bids WHERE id = (SELECT MAX(id) FROM bids WHERE lot_id = ?)';
 
-    $DB = new database();
+    $DB = Database::getInstance();
     $DB->prepareQuery($sql, [$lotId]);
-
     $data = $DB->getAssocResult();
 
     $winUserId = $data['user_id'] ?? NULL;

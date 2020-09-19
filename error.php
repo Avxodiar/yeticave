@@ -8,7 +8,7 @@ const HTTP_STATUS_CODE = [
     503 => 'Сервис временно не доступен.'
 ];
 
-$id = (int)$_SERVER['REDIRECT_STATUS'];
+$id = (int) $_SERVER['REDIRECT_STATUS'];
 // Если нет в списке то 404
 $id = $id ?? 404;
 // Все 5xx ошибки показываем как 500

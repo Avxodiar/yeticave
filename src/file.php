@@ -65,7 +65,7 @@ function checkDir(string $dir) {
  * @param array  $upload - массив полученный из POST для input[type=file]
  * @param string $dir - каталог для загрузки файлов
  * @return array
- * @todo добавить логирование ошибок
+ * @todo добавить логирование ошибок см errorLog()
  */
 function upload(array $upload, string $dir) {
     $error = '';

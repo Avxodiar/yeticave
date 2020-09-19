@@ -3,7 +3,7 @@ require_once 'src/init.php';
 
 use function yeticave\lot\{getLotsCategoryCount, getCategories, getCategoryLots};
 
-$id = (int)$_GET['id'];
+$id = (int) $_GET['id'];
 
 $categories = getCategories();
 if(!$id || !isset($categories[$id])) {

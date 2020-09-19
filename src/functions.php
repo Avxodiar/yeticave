@@ -104,16 +104,19 @@ function errorLog(string $message, string $file = '') {
 
 /**
  * Имелись ли ошибки при обработке формы
+ * @todo перенести в файл формы
+ *       рекурсивно проверять массив на не пустоту? $errors = [ '', '', 'c' => '']
  * @return bool
  */
 function hasError() {
     global $errors;
-    return (bool)count($errors);
+    return (bool) count($errors);
 }
 
 /**
  * Проверка наличия ошибки поля при обработке формы
  * возвращает класс для отображения поля ошибки
+ * @todo перенести в файл формы
  * @param $field - поле формы
  * @return string
  */

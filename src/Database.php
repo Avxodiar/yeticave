@@ -1,17 +1,19 @@
 <?php
 namespace yeticave;
 
-use mysqli;
-use Exception;
+use mysqli, Exception;
 
-class database
+class Database
 {
+    use SingletonTrait;
+
     // ресурс соединения с бд
     private $dbResource;
+
     // подготовленный запрос
     private $stmt;
 
-    public function __construct()
+    private function __construct()
     {
         // Установка соединения с БД
         try
@@ -32,7 +34,8 @@ class database
      * @param bool   $insert
      * @return bool|int|string
      */
-    public function prepareQuery(string $sql, $params, $insert = false) {
+    public function prepareQuery(string $sql, $params, $insert = false)
+    {
 
         $this->stmt = $this->dbResource->prepare($sql);
         if (!$this->stmt)
@@ -54,7 +57,7 @@ class database
             if ($type)
             {
                 $keys .= $type;
-                $vars[] = ($key === 'password') ? $param : mysqli_real_escape_string($this->dbResource, $param);
+                $vars[] = ($key === 'password') ? $param : $this->dbResource->real_escape_string($param);
             }
         }
 
@@ -69,7 +72,7 @@ class database
             $this->error('Не удалось выполнить подготовленный запрос.');
         }
 
-        return ($insert) ? mysqli_insert_id($this->dbResource) : $res;
+        return ($insert) ? $this->dbResource->insert_id : $res;
     }
 
     /**
@@ -118,8 +121,7 @@ class database
         }
 
         $res = $this->stmt->get_result();
-        if(!$res)
-        {
+        if(!$res) {
             $this->error('Ошибка получения результата подготовленного запроса.');
         }
 
@@ -134,17 +136,16 @@ class database
      */
     public function query(string $sql)
     {
-        if (empty($sql))
-        {
+        if (empty($sql)) {
             return false;
         }
 
-        $result = mysqli_query($this->dbResource, $sql);
+        $result = $this->dbResource->query($sql);
         if (!$result) {
             $this->error("Ошибка выполнения запроса ( {$sql} )");
         }
 
-        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
 
     /**
@@ -155,5 +156,10 @@ class database
     {
         errorLog( "{$text} ({$this->dbResource->errno} : {$this->dbResource->error} )");
         errorPage(500);
+    }
+
+    public function __destruct()
+    {
+        $this->dbResource->close();
     }
 }

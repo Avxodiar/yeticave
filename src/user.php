@@ -1,7 +1,7 @@
 <?php
 namespace yeticave\user;
 
-use yeticave\database;
+use yeticave\Database;
 
 /**
  * Поиск пользователя по email
@@ -10,7 +10,7 @@ use yeticave\database;
  */
 function searchByEmail(string $email)
 {
-    $DB = new database();
+    $DB = Database::getInstance();
     $DB->prepareQuery(
         'SELECT * FROM `users` WHERE `email` = ?',
         [$email]
@@ -42,10 +42,9 @@ function add(array $fields) {
         $newFields[$key] = $fields[$key] ?? '';
     }
 
-    $DB = new database();
     $sql = 'INSERT INTO `users` (`name`, `email`, `password`, `created_at`, `about`, `avatar_url`) VALUES (?, ?, ?, NOW(), ?, ?)';
 
-    return $DB->prepareQuery($sql, $newFields, true);
+    return Database::getInstance()->prepareQuery($sql, $newFields, true);
 }
 
 /**
@@ -55,7 +54,7 @@ function add(array $fields) {
  */
 function getInfo(int $id)
 {
-    $DB = new database();
+    $DB = Database::getInstance();
     $DB->prepareQuery(
         'SELECT * FROM `users` WHERE `id` = ?',
         [$id]
