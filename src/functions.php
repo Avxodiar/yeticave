@@ -47,6 +47,59 @@ function getTemplate(string $template, array $data) {
 }
 
 /**
+ * Проверка корректности текущей страницы
+ * При не верном значении выполняет редирект на первую или последнюю страницу
+ * @param int    $pageId - номер текущей страницы
+ * @param string $uri - текущуй адрес
+ * @param int    $countElem - суммарное кол-во элементов на всех страницах
+ */
+function checkPage(int $pageId, string $uri, int $countElem) : void
+{
+    // кол-во страниц
+    $pageCount = (int) ceil($countElem / LOTS_ON_PAGE);
+
+    // если указан 0, то показываем начальную страницу раздела
+    if($pageId === 0) {
+        header('Location: ' . $uri);
+        exit();
+    }
+
+    // если указана страница больше максимальной, то показываем последнюю
+    if($pageCount && $pageId > $pageCount) {
+        header('Location: ' . $uri . '&page='. $pageCount);
+        exit();
+    }
+}
+
+/**
+ * Генерация отображения блока пагинации
+ * @param int    $pageId - номер текущей страницы
+ * @param string $uri - текущуй адрес
+ * @param int    $countElem - суммарное кол-во элементов на всех страницах
+ * @param bool   $hide - не отображать блок пагинации если кол-во элементов меньше
+ * @return string
+ */
+function pagination(int $pageId, string $uri, int $countElem, bool $hide = false) : string
+{
+    if($countElem < 1 || ($hide && $countElem < LOTS_ON_PAGE) ) {
+        return '';
+    }
+
+    // кол-во страниц
+    $pageCount = (int) ceil($countElem / LOTS_ON_PAGE);
+
+    return getTemplate('pagination.php',
+        [
+            'curPage' => $pageId,
+            'pageCount' => $pageCount,
+            'uri' => $uri,
+            'backHref' => ($pageId === 1) ? '' : 'href="' . $uri . ($pageId - 1) .'"',
+            'forwardHref' => ($pageId < $pageCount) ? 'href="' . $uri . ($pageId + 1) .'"' : ''
+        ]
+    );
+}
+
+/**
  * добавление js файла для подключения в шаблон
  * @param string $jsPath
  */

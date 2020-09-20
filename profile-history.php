@@ -11,33 +11,24 @@ if(!isAuth()) {
 $historyLot = getLotHistory();
 
 // кол-во активных лотов
-$count = getLotsCount($historyLot);
+$lotCount = getLotsCount($historyLot);
 // кол-во страниц
-$pages = (int) ceil($count / LOTS_ON_PAGE);
+$pages = (int) ceil($lotCount / LOTS_ON_PAGE);
 
+// текущая страница
 $pageId = (int) ($_GET['page'] ?? 1 );
-// если указан 0, то показываем начальную страницу
-if($pageId === 0) {
-    header('Location: ' . $_SERVER['PHP_SELF']);
-    exit();
-}
-// если указана страница больше максимальной, то показываем последнюю
-$uri = $_SERVER['PHP_SELF'] . '?page=';
-if($count && $pageId > $pages) {
-    header('Location: ' . $uri . $pages);
-    exit();
-};
+// текущий адрес
+$uri = $_SERVER['PHP_SELF'];
+
+// проверка корректности номера текущей страницы
+checkPage($pageId, $uri, $lotCount);
 
 $lots = (count($historyLot)) ? getLots($historyLot, LOTS_ON_PAGE, ($pageId-1) * LOTS_ON_PAGE) : [];
 
 $content = getTemplate(
     'user-history.php', [
         'lots' => $lots,
-        'curPage' => $pageId,
-        'pages' => $pages,
-        'uri' => $uri,
-        'backHref' => ($pageId === 1) ? '' : 'href="' . $uri . ($pageId - 1) .'"',
-        'forwardHref' => ($pageId < $pages) ? 'href="' . $uri . ($pageId + 1) .'"' : ''
+        'pagination' => pagination($pageId, $uri, $lotCount)
     ]
 );
 

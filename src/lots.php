@@ -81,6 +81,7 @@ function getCategoryLots(int $id, $limit = 0, $offset = 0)
             WHERE lots.active = 1 AND lots.category_id = ? AND lots.data_finish > NOW()
             ORDER BY `data_start` DESC';
     if ($limit) {
+        $offset = $offset >= 0 ? $offset : 0;
         $sql .= " LIMIT {$limit} OFFSET {$offset}";
     }
 
@@ -173,22 +174,45 @@ function getLots(array $ids, $limit = 0, $offset = 0)
 /**
  * Полнотекстовый поиск по полям названия и описания лотов
  * @param string $search
+ * @param int   $limit
+ * @param int   $offset
  * @return array|null
  */
-function search(string $search)
+function search(string $search, $limit = 0, $offset = 0)
 {
     $sql =  'SELECT lots.id, lots.name, categories.name AS `category`, lots.price_start AS `price`,
                 lots.price_rate, lots.price_step, lots.image_url AS `pict`, lots.description
             FROM `lots`
             LEFT JOIN `categories` ON lots.category_id = categories.id
             WHERE lots.active = 1 AND lots.data_finish > NOW() AND
-                  MATCH(lots.name, description) AGAINST(?)';
+                  MATCH(lots.name, description) AGAINST(? IN BOOLEAN MODE)';
+    if ($limit) {
+        $sql .= " LIMIT {$limit} OFFSET {$offset}";
+    }
 
     $DB = Database::getInstance();
     $DB->prepareQuery($sql, [$search]);
     $data = $DB->getAssocResult(true) ?? [];
 
     return check($data);
+}
+
+/**
+ * Возвращает количество искомых лотов по указанному запросу
+ * @param string $search - строка поиска
+ * @return int
+ */
+function searchCount(string $search)
+{
+    $sql =  'SELECT COUNT(*) AS CNT FROM `lots`
+            WHERE lots.active = 1 AND lots.data_finish > NOW() AND
+                  MATCH(lots.name, description) AGAINST(? IN BOOLEAN MODE)';
+
+    $DB = Database::getInstance();
+    $DB->prepareQuery($sql, [$search]);
+    $data = $DB->getAssocResult();
+
+    return $data['CNT'] ?? 0;
 }
 
 /**
