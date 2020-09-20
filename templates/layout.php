@@ -5,6 +5,9 @@
     <title><?=$pageTitle;?></title>
     <link href="css/normalize.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
+    <link rel="icon" href="img/favicon16.png" sizes="16x16" type="image/png">
+    <link rel="icon" href="img/favicon32.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="img/favicon.svg" sizes="any" type="image/svg+xml">
 </head>
 <body>
 
