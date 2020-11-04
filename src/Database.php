@@ -16,13 +16,10 @@ class Database
     private function __construct()
     {
         // Установка соединения с БД
-        try
-        {
+        try {
             $this->dbResource = new mysqli(DB_CONFIG['host'], DB_CONFIG['user'], DB_CONFIG['password'], DB_CONFIG['database']);
             $this->dbResource->set_charset('utf8');
-        }
-        catch (Exception $e)
-        {
+        } catch (Exception $e) {
             $this->error('Ошибка подключения к БД.');
         }
     }
@@ -32,14 +29,12 @@ class Database
      * @param string $sql
      * @param        $params
      * @param bool   $insert
-     * @return bool|int|string
+     * @return mixed
      */
     public function prepareQuery(string $sql, $params, $insert = false)
     {
-
         $this->stmt = $this->dbResource->prepare($sql);
-        if (!$this->stmt)
-        {
+        if (!$this->stmt) {
             $this->error("Не удалось подготовить запрос: ( {$sql} )");
         }
 
@@ -51,24 +46,20 @@ class Database
             'string' => 's',
             'double' => 'd'
         ];
-        foreach ($params as $key => $param)
-        {
-            $type = $types[ gettype($param) ] ?? null;
-            if ($type)
-            {
+        foreach ($params as $key => $param) {
+            $type = $types[gettype($param)] ?? null;
+            if ($type) {
                 $keys .= $type;
                 $vars[] = ($key === 'password') ? $param : $this->dbResource->real_escape_string($param);
             }
         }
 
-        if (!$this->stmt->bind_param($keys, ...$vars))
-        {
+        if (!$this->stmt->bind_param($keys, ...$vars)) {
             $this->error('Не удалось привязать параметры.');
         }
 
         $res = $this->stmt->execute();
-        if (!$res)
-        {
+        if (!$res) {
             $this->error('Не удалось выполнить подготовленный запрос.');
         }
 
@@ -85,14 +76,13 @@ class Database
         $this->dbResource->begin_transaction();
 
         $results = [];
-        foreach ($queries as $id => $query)
-        {
+        foreach ($queries as $id => $query) {
             $sql = $query['sql'];
             $fields = $query['fields'];
             $insert = (bool) ($query['insert'] ?? 0);
 
             $res = $this->prepareQuery($sql, $fields, $insert);
-            if($res) {
+            if ($res) {
                 $results[$id] = $res;
             } else {
                 $this->dbResource->rollback();
@@ -116,12 +106,12 @@ class Database
      */
     public function getAssocResult($all = false)
     {
-        if( $this->stmt === null) {
+        if ($this->stmt === null) {
             $this->error('Попытка выполнения неподготовленного запроса');
         }
 
         $res = $this->stmt->get_result();
-        if(!$res) {
+        if (!$res) {
             $this->error('Ошибка получения результата подготовленного запроса.');
         }
 
@@ -152,9 +142,9 @@ class Database
      * Обработка ошибок
      * @param $text
      */
-    private function error($text) : void
+    private function error($text): void
     {
-        errorLog( "{$text} ({$this->dbResource->errno} : {$this->dbResource->error} )");
+        errorLog("{$text} ({$this->dbResource->errno} : {$this->dbResource->error} )");
         errorPage(500);
     }
 
