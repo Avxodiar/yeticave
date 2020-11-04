@@ -43,6 +43,15 @@ function getTemplate(string $template, array $data, array $js = []): string
 
     // данные для вывода в шаблоне
     $data['isAuth'] = isAuth();
+    // наличие ошибок валидации в форме
+    $hasValidError = isset($data['errors']) ? (bool) count($data['errors']) : false;
+    // наличие ошибок валидации у полей формы
+    $hasFieldValidError = [];
+    if (isset($data['errors'])) {
+        foreach ($data['errors'] as $field => $value) {
+            $hasFieldValidError[$field] = !empty($value);
+        }
+    }
     extract($data, EXTR_OVERWRITE);
     $jsList = getJsList($js);
 
@@ -154,34 +163,6 @@ function errorLog(string $message, string $file = ''): void
     }
 
     error_log($message, 0);
-}
-
-
-/**
- * Имелись ли ошибки при обработке формы
- * @todo перенести в файл формы
- *       рекурсивно проверять массив на не пустоту? $errors = [ '', '', 'c' => '']
- * @return bool
- */
-function hasError(): bool
-{
-    global $errors;
-
-    return (bool) count($errors);
-}
-
-/**
- * Проверка наличия ошибки поля при обработке формы
- * возвращает класс для отображения поля ошибки
- * @todo перенести в файл формы
- * @param $field - поле формы
- * @return string
- */
-function checkError($field): string
-{
-    global $errors;
-
-    return !empty($errors[$field]) ? 'form__item--invalid' : '';
 }
 
 /**
