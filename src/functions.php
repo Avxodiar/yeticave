@@ -1,26 +1,28 @@
 <?php
+
 use function yeticave\user\{isAuth, getName, getAvatar};
 use function yeticave\lot\getCategories;
 
 /**
  * Подключение основного шаблона
- * @param $title
- * @param $content
+ * @param string $title - заголовок страницы
+ * @param $content - содержимое страницы
+ * @param array  $js - список подключаемы js скриптов
  */
-function includeTemplate($title, $content) {
-    global $logoLink;
-
+function includeTemplate(string $title, $content, array $js = []) : void
+{
     print(
         getTemplate(
         'layout.php', [
             'pageTitle' => $title,
-            'logoLink' => $logoLink,
+            'logoLink' => MAIN_PAGE ? '' : ' href="/"',
             'isAuth' => isAuth(),
             'userName' => getName(),
             'userAvatar' => getAvatar(),
             'mainContainer' => $content,
             'categories' => getCategories()
-            ]
+            ],
+            $js
         )
     );
 }
@@ -29,21 +31,45 @@ function includeTemplate($title, $content) {
  * Шаблонизатор страниц
  * @param string $template - название файла шаблона из каталога templates
  * @param array  $data     - массив данных для вывода в шаблоне
- * @return false|string
+ * @param array  $js - список подключаемы js скриптов
+ * @return string
  */
-function getTemplate(string $template, array $data) {
+function getTemplate(string $template, array $data, array $js = []): string
+{
     $pathTemplate = TEMPLATE_PATH . $template;
-    if(empty($template) || !file_exists($pathTemplate)) {
+    if (empty($template) || !file_exists($pathTemplate)) {
         return '';
     }
 
+    // данные для вывода в шаблоне
     $data['isAuth'] = isAuth();
     extract($data, EXTR_OVERWRITE);
+    $jsList = getJsList($js);
 
     ob_start();
     include $pathTemplate;
 
     return ob_get_clean();
+}
+
+/**
+ * Вывод списка js файлов в шаблоне
+ * @param array $js
+ * @return string
+ */
+function getJsList(array $js): string
+{
+    $jsList = '';
+
+    if (!empty($js)) {
+        foreach ($js as $jsFile) {
+            if (file_exists(ROOT . '/' . $jsFile)) {
+                $jsList .= "<script src='{$jsFile}'></script>\n";
+            }
+        }
+    }
+
+    return $jsList;
 }
 
 /**
@@ -53,20 +79,20 @@ function getTemplate(string $template, array $data) {
  * @param string $uri - текущуй адрес
  * @param int    $countElem - суммарное кол-во элементов на всех страницах
  */
-function checkPage(int $pageId, string $uri, int $countElem) : void
+function checkPage(int $pageId, string $uri, int $countElem): void
 {
     // кол-во страниц
     $pageCount = (int) ceil($countElem / LOTS_ON_PAGE);
 
     // если указан 0, то показываем начальную страницу раздела
-    if($pageId === 0) {
+    if ($pageId === 0) {
         header('Location: ' . $uri);
         exit();
     }
 
     // если указана страница больше максимальной, то показываем последнюю
-    if($pageCount && $pageId > $pageCount) {
-        header('Location: ' . $uri . '&page='. $pageCount);
+    if ($pageCount && $pageId > $pageCount) {
+        header('Location: ' . $uri . '&page=' . $pageCount);
         exit();
     }
 }
@@ -79,9 +105,9 @@ function checkPage(int $pageId, string $uri, int $countElem) : void
  * @param bool   $hide - не отображать блок пагинации если кол-во элементов меньше
  * @return string
  */
-function pagination(int $pageId, string $uri, int $countElem, bool $hide = false) : string
+function pagination(int $pageId, string $uri, int $countElem, bool $hide = false): string
 {
-    if($countElem < 1 || ($hide && $countElem < LOTS_ON_PAGE) ) {
+    if ($countElem < 1 || ($hide && $countElem < LOTS_ON_PAGE)) {
         return '';
     }
 
@@ -93,45 +119,21 @@ function pagination(int $pageId, string $uri, int $countElem, bool $hide = false
             'curPage' => $pageId,
             'pageCount' => $pageCount,
             'uri' => $uri,
-            'backHref' => ($pageId === 1) ? '' : 'href="' . $uri . ($pageId - 1) .'"',
-            'forwardHref' => ($pageId < $pageCount) ? 'href="' . $uri . ($pageId + 1) .'"' : ''
+            'backHref' => ($pageId === 1) ? '' : 'href="' . $uri . ($pageId - 1) . '"',
+            'forwardHref' => ($pageId < $pageCount) ? 'href="' . $uri . ($pageId + 1) . '"' : '',
         ]
     );
-}
-
-/**
- * добавление js файла для подключения в шаблон
- * @param string $jsPath
- */
-function includeJS(string $jsPath) {
-    global $JS;
-
-    if(file_exists(ROOT .'/'. $jsPath)) {
-        $JS[] = $jsPath;
-    }
-}
-
-/**
- * Вывод списка js файлов подключенных через includeJS в шаблоне
- */
-function showJS(){
-    global $JS;
-
-    if (!empty($JS)) {
-        foreach ($JS as $jsFile) {
-            echo "<script src='{$jsFile}'></script>";
-        }
-    }
 }
 
 /**
  * Отображение страницы с ошибкой
  * @param $code - http код ошибки
  */
-function errorPage($code) {
+function errorPage($code): void
+{
     http_response_code($code);
     $_SERVER['REDIRECT_STATUS'] = $code;
-    require_once ROOT. '/error.php';
+    require_once ROOT . '/error.php';
     exit();
 }
 
@@ -143,11 +145,11 @@ function errorPage($code) {
  * @param string $message - текст ошибки
  * @param string $file - файл для логирования ошибок
  */
-function errorLog(string $message, string $file = '') {
-    if(!empty($file)) {
+function errorLog(string $message, string $file = ''): void
+{
+    if (!empty($file)) {
         error_log($message . PHP_EOL, 3, $file);
-    }
-    elseif (defined('ADMIN_MAIL') && !empty(ADMIN_MAIL)) {
+    } elseif (defined('ADMIN_MAIL') && !empty(ADMIN_MAIL)) {
         error_log($message, 1, ADMIN_MAIL);
     }
 
@@ -161,8 +163,10 @@ function errorLog(string $message, string $file = '') {
  *       рекурсивно проверять массив на не пустоту? $errors = [ '', '', 'c' => '']
  * @return bool
  */
-function hasError() {
+function hasError(): bool
+{
     global $errors;
+
     return (bool) count($errors);
 }
 
@@ -173,8 +177,10 @@ function hasError() {
  * @param $field - поле формы
  * @return string
  */
-function checkError($field) {
+function checkError($field): string
+{
     global $errors;
+
     return !empty($errors[$field]) ? 'form__item--invalid' : '';
 }
 
@@ -196,9 +202,10 @@ function checkError($field) {
  * @param  bool   $rub   - сверстанный или текстовый символ рубля
  * @return string
  */
-function priceFormat($price, $rub = true) {
+function priceFormat($price, $rub = true): string
+{
     $priceFormat = (int) ceil($price);
-    if($priceFormat > 1000) {
+    if ($priceFormat > 1000) {
         $priceFormat = number_format($priceFormat, 0, '', ' ');
     }
     $priceFormat .= ($rub) ? ' <b class="rub">р</b>' : ' р';
@@ -209,22 +216,22 @@ function priceFormat($price, $rub = true) {
 /**
  * Форматирование вывода времени
  * @param int $timestamp
- * @return false|string
+ * @return string
  */
-function timeFormat(int $timestamp) {
+function timeFormat(int $timestamp): string
+{
     $timeDiff = time() - $timestamp;
 
-    // для вывода на странице лота времени в истории ставок
-    if($timeDiff >= 0) {
+    // на странице лота времени в истории ставок
+    if ($timeDiff >= 0) {
         if ($timeDiff < 7000) {
             $timeDiff = floor($timeDiff / 60);
             $ts = ($timeDiff > 60) ? 'Час назад' : $timeDiff . ' минут назад';
         } else {
             $ts = gmdate('y.m.d в H:i', $timestamp);
         }
-    }
-    // для вывода на страницах профиля пользователя в списках лотов и ставок
-    else {
+    } else {
+        // на страницах профиля пользователя в списках лотов и ставок
         $timeDiff = abs($timeDiff);
         if ($timeDiff > 86400) {
             $ts = gmdate('dд Hч iм', $timeDiff);
@@ -232,6 +239,7 @@ function timeFormat(int $timestamp) {
             $ts = gmdate('H:i:s', $timeDiff);
         }
     }
+
     return $ts;
 }
 
@@ -239,7 +247,8 @@ function timeFormat(int $timestamp) {
  * Сколько осталось времени до начала новых суток
  * @return string - формат вывода "ЧЧ:МM"
  */
-function getLeftMidnight() {
+function getLeftMidnight(): string
+{
     $midnight = mktime(0, 0, 0, date('n'), date('j') + 1, date('Y'));
     $left = $midnight - time();
 

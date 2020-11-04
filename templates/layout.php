@@ -101,6 +101,6 @@ if(!MAIN_PAGE) {
     </div>
 </footer>
 
-<?php showJS(); ?>
+<?=$jsList;?>
 </body>
 </html>

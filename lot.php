@@ -64,18 +64,18 @@ function checkAjax() {
 checkAjax();
 
 $id = $_GET['id'] ?? -1;
-if($id < 0 ) {
+if ($id < 0) {
     errorPage(404);
 }
 
 // проверяем выбранный лот
 $lot = current(getLots([$id]));
-if(empty($lot)) {
+if (empty($lot)) {
     errorPage(404);
 }
 
 // добавляем лот в список просмотренных для авторизованных пользователей
-if(isAuth()) {
+if (isAuth()) {
     addLotHistory($id);
 }
 
@@ -85,7 +85,11 @@ $content = getTemplate(
     'bets' => getBets($id)
 ]);
 
-
-includeJS('js/backend.js');
-includeJS('js/lot.js');
-includeTemplate($lot['name'], $content);
+includeTemplate(
+    $lot['name'],
+    $content,
+    [
+        'js/backend.js',
+        'js/lot.js'
+    ]
+);
