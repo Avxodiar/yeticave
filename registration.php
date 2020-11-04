@@ -1,7 +1,5 @@
 <?php
 require_once 'src/init.php';
-require_once 'src/form.php';
-require_once 'src/file.php';
 
 use function yeticave\form\validate as formValidate;
 use function yeticave\file\upload as fileUpload;

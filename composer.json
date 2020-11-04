@@ -1,0 +1,24 @@
+{
+    "name": "avx/yeticave",
+    "description": "Web-auction «YetiCave»",
+    "type": "project",
+    "authors": [
+        {
+            "name": "Kharitov Andrew",
+            "email": "avxodiar@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "autoload": {
+        "files": [
+            "src/SingletonTrait.php",
+            "src/Database.php",
+            "src/functions.php",
+            "src/user.php",
+            "src/lots.php",
+            "src/form.php",
+            "src/file.php"
+        ]
+    },
+    "require": {}
+}

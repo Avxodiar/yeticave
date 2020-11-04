@@ -1,6 +1,5 @@
 <?php
 require_once 'src/init.php';
-require_once 'src/form.php';
 
 use function yeticave\form\isValidMail;
 use function yeticave\user\{auth, isAuth, getName, searchByEmail, checkPassword};
