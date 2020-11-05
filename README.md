@@ -4,7 +4,9 @@
 
 Выполнен в рамках интенсива<br>
 «Профессиональный PHP, уровень 1» от [HTML Academy](https://htmlacademy.ru)<br>
+
 Используемые технологии: PHP 7.2, MySQL 5.7, процедурный стиль c паттерном "Page Controller" + Composer с автозагрузкой и пакетом SwiftMailer для работы с почтой <br>
+
 Фреймворки: не используются - условие обучения<br>
 Спецификация: [Specification.md](https://github.com/Avxodiar/yeticave/blob/master/Specification.md)
 Детальное задание [tz_detail.pdf](https://github.com/Avxodiar/portfolio/yeticave/blob/master/tz_detail.pdf)
