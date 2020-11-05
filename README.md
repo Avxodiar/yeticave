@@ -6,10 +6,11 @@
 «Профессиональный PHP, уровень 1» от [HTML Academy](https://htmlacademy.ru)<br>
 
 Используемые технологии: PHP 7.2, MySQL 5.7, процедурный стиль c паттерном "Page Controller" + Composer с автозагрузкой и пакетом SwiftMailer для работы с почтой <br>
-
 Фреймворки: не используются - условие обучения<br>
-Спецификация: [Specification.md](https://github.com/Avxodiar/yeticave/blob/master/Specification.md)
-Детальное задание [tz_detail.pdf](https://github.com/Avxodiar/portfolio/yeticave/blob/master/tz_detail.pdf)
+
+Спецификация: [Specification.md](https://github.com/Avxodiar/yeticave/blob/master/Specification.md)<br>
+Детальное задание [tz_detail.pdf](https://github.com/Avxodiar/portfolio/yeticave/blob/master/tz_detail.pdf)<br>
+Тех.задание [tz_yeticave.doc](https://github.com/Avxodiar/portfolio/yeticave/blob/master/tz_yeticave.docx)
 
 Примечания:
 1. В соответствии с ТЗ п.6, в корне проекта находится файл queries.sql со схемой БД и примерами запросов на выборку/изменение данных. Более логичным в корне хранить только файл со схемой создания БД и ее структурой, а дополнительное описание с примерами запросов к БД вынести в отдельный файл. А еще правильнее было бы использовать инсталятор (install.php или Makefile), но это уже совсем другая история...
