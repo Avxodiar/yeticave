@@ -139,6 +139,20 @@ class Database
     }
 
     /**
+     * Выполнение подготовленного запроса и получение результата (сахар)
+     * @param string $sql - запрос
+     * @param array  $data - массив парметров подготовленного запроса
+     * @param bool $all - возвращать все результаты
+     * @return array|mixed
+     */
+    public function dbQueryAssoc(string $sql, array $data, bool $all = false)
+    {
+        $this->prepareQuery($sql, $data);
+
+        return $this->getAssocResult($all);
+    }
+
+    /**
      * Обработка ошибок
      * @param $text
      */

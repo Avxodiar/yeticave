@@ -235,3 +235,38 @@ function getLeftMidnight(): string
 
     return gmdate('H:i', $left);
 }
+
+
+/**
+ * Отправление сообщения победителю
+ * @param array $lot - лот
+ * @param array $winner - победитель
+ * @return int кол-во успешных отправлений. 0 может означать ошибку
+ */
+function sendWinnerMail(string $userMail, string $userName, int $lotId, string $lotName): int
+{
+    //конфигурация транспорта
+    $transport = (new Swift_SmtpTransport(SMTP_CONFIG['server'], SMTP_CONFIG['port'], SMTP_CONFIG['encryption']))
+        ->setUsername(SMTP_CONFIG['user'])
+        ->setPassword(SMTP_CONFIG['password']);
+
+    $mailContent = getTemplate(
+        'email.php', [
+            'userName' => $userName,
+            'lotLink' => '/lot.php?id=' . $lotId,
+            'lotName' => $lotName
+        ]
+    );
+
+    debugMessage($mailContent, '$mailContent');
+
+    //Формирование сообщения
+    $message = (new Swift_Message('Ваша ставка победила'))
+        ->setFrom([SMTP_CONFIG['user'] => 'YetiCave'])
+        ->setTo([$userMail => $userName])
+        ->setBody($mailContent,'text/html');
+
+
+    //отправка
+    return (new Swift_Mailer($transport))->send($message);
+}

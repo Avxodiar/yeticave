@@ -43,3 +43,11 @@ const DB_CONFIG = [
 const LOTS_ON_INDEX = 9;
 // кол-во отображаемых лотов на страницу каталога и истории просмотренных лотов в профиле пользователя
 const LOTS_ON_PAGE = 6;
+
+const SMTP_CONFIG = [
+    'user' => 'doingsdone@gmail.com',
+    'password' => 'rds7BgcL',
+    'server' => 'smtp.mail.ru',
+    'port' => '465',
+    'encryption' => 'ssl',
+];

@@ -55,7 +55,7 @@ function getLotsCategoryCount(int $id): int
     $sql = 'SELECT COUNT(*) AS CNT FROM `lots`
             WHERE lots.category_id = ? AND active = 1 and data_finish > NOW()';
 
-    $data = dbQueryAssoc($sql, [$id]);
+    $data = Database::getInstance()->dbQueryAssoc($sql, [$id]);
 
     return $data['CNT'] ?? 0;
 }
@@ -85,7 +85,7 @@ function getCategoryLots(int $id, int $limit = 0, int $offset = 0)
         $sql .= " LIMIT {$limit} OFFSET {$offset}";
     }
 
-    $lots = dbQueryAssoc($sql, [$id], true) ?? [];
+    $lots = Database::getInstance()->dbQueryAssoc($sql, [$id], true) ?? [];
 
     return check($lots);
 }
@@ -132,7 +132,7 @@ function getLotsCount(array $ids): int
     $sql = "SELECT COUNT(*) AS CNT FROM `lots`
             WHERE id in (?{$listId}) AND active = 1 and data_finish > NOW()";
 
-    $data = dbQueryAssoc($sql, $ids);
+    $data = Database::getInstance()->dbQueryAssoc($sql, $ids);
 
     return $data['CNT'] ?? 0;
 }
@@ -159,7 +159,7 @@ function getLots(array $ids, $limit = 0, $offset = 0): array
         $sql .= " LIMIT {$limit} OFFSET {$offset}";
     }
 
-    $lots = dbQueryAssoc($sql, $ids, true) ?? [];
+    $lots = Database::getInstance()->dbQueryAssoc($sql, $ids, true) ?? [];
 
     return check($lots);
 }
@@ -183,7 +183,7 @@ function search(string $search, int $limit = 0, int $offset = 0)
         $sql .= " LIMIT {$limit} OFFSET {$offset}";
     }
 
-    $data = dbQueryAssoc($sql, [$search], true) ?? [];
+    $data = Database::getInstance()->dbQueryAssoc($sql, [$search], true) ?? [];
 
     return check($data);
 }
@@ -199,7 +199,7 @@ function searchCount(string $search): int
             WHERE lots.active = 1 AND lots.data_finish > NOW() AND
                   MATCH(lots.name, description) AGAINST(? IN BOOLEAN MODE)';
 
-    $data = dbQueryAssoc($sql, [$search]);
+    $data = Database::getInstance()->dbQueryAssoc($sql, [$search]);
 
     return $data['CNT'] ?? 0;
 }
@@ -287,7 +287,7 @@ function getBets(int $lotId): array
             JOIN users u ON b.user_id = u.id
             WHERE lot_id = ? ORDER BY ID DESC';
 
-    $data = dbQueryAssoc($sql, [$lotId], true) ?? [];
+    $data = Database::getInstance()->dbQueryAssoc($sql, [$lotId], true) ?? [];
 
     //форматирование ставок
     foreach ($data as &$bet) {
@@ -333,7 +333,7 @@ function getUserLotCount()
 
     $sql = 'SELECT COUNT(*) AS CNT FROM lots WHERE user_id = ?';
 
-    $data = dbQueryAssoc($sql, [$userId]);
+    $data = Database::getInstance()->dbQueryAssoc($sql, [$userId]);
 
     return $data['CNT'] ?? 0;
 }
@@ -348,7 +348,7 @@ function getUserBetCount(): int
 
     $sql = 'SELECT count(DISTINCT lot_id) AS CNT FROM bids WHERE user_id = ?';
 
-    $data = dbQueryAssoc($sql, [$userId]);
+    $data = Database::getInstance()->dbQueryAssoc($sql, [$userId]);
 
     return $data['CNT'] ?? 0;
 }
@@ -361,16 +361,7 @@ function getUserLots(): array
 {
     $userId = getId();
 
-    $sql = 'SELECT l.id, l.name, c.name cat_name, l.image_url, UNIX_TIMESTAMP(l.data_finish) dt_finish,
-                l.price_start, l.price_rate, l.price_step, l.winner_id, l.description, MAX(b.sum) max_bet
-            FROM lots l
-            JOIN categories c ON l.category_id = c.id
-            LEFT JOIN bids b ON b.lot_id = l.id
-            WHERE l.user_id = ?
-            GROUP BY l.id
-            ORDER BY l.id DESC';
-
-    $data = dbQueryAssoc($sql, [$userId], true) ?? [];
+    $data = getUserLotList($userId);
 
     foreach ($data as &$lot) {
         $lot['tsFinish'] = timeFormat($lot['dt_finish']);
@@ -386,7 +377,6 @@ function getUserLots(): array
             $lot['status'] = 'end';
         }
     }
-    unset($lot);
 
     return $data;
 }
@@ -399,16 +389,7 @@ function getUserBets(): array
 {
     $userId = getId();
 
-    $sql = 'SELECT MAX(b.id) AS id, b.lot_id, MAX(UNIX_TIMESTAMP(b.data_insert)) data_insert, MAX(b.sum) price,
-                l.name, l.image_url, l.description, c.name cat_name, l.price_rate, l.winner_id, l.active,
-                UNIX_TIMESTAMP(l.data_finish) data_finish
-            FROM bids b
-            JOIN lots l ON l.id = b.lot_id
-            JOIN categories c ON c.id = l.category_id
-            WHERE b.user_id = ?
-            GROUP BY b.lot_id';
-
-    $res = dbQueryAssoc($sql, [$userId], true) ?? [];
+    $res = getUserActualBids($userId);
 
     $lots = [];
     $data = [];
@@ -447,12 +428,7 @@ function getUserBets(): array
     * если делать подзапросом, объем данных вырастет на порядки
     */
     if ($lots) {
-        $listId = str_repeat(', ?', count($lots) - 1);
-        $sql = "SELECT id, user_id, lot_id FROM bids
-            WHERE lot_id IN (?{$listId}) AND
-            id IN ( SELECT MAX(id) FROM bids GROUP BY lot_id)";
-
-        $bids = dbQueryAssoc($sql, $lots, true) ?? [];
+        $bids = getBids($lots);
 
         $bidList = [];
         //список ставок по id лоту с пользователем сделавшего последнюю ставку
@@ -477,6 +453,100 @@ function getUserBets(): array
     return $data;
 }
 
+
+/**
+ * Список лотов пользователя
+ * @param int $userId
+ * @return array
+ */
+function getUserLotList(int $userId): array
+{
+    $sql = 'SELECT l.id, l.name, c.name cat_name, l.image_url, UNIX_TIMESTAMP(l.data_finish) dt_finish,
+                l.price_start, l.price_rate, l.price_step, l.winner_id, l.description, MAX(b.sum) max_bet
+            FROM lots l
+            JOIN categories c ON l.category_id = c.id
+            LEFT JOIN bids b ON b.lot_id = l.id
+            WHERE l.user_id = ?
+            GROUP BY l.id
+            ORDER BY l.id DESC';
+
+    return Database::getInstance()->dbQueryAssoc($sql, [$userId], true) ?? [];
+}
+
+/**
+ * Список актуальных ставок пользователя
+ * @param int $userId
+ * @return array
+ */
+function getUserActualBids(int $userId): array
+{
+    $sql = 'SELECT MAX(b.id) AS id, b.lot_id, MAX(UNIX_TIMESTAMP(b.data_insert)) data_insert, MAX(b.sum) price,
+                l.name, l.image_url, l.description, c.name cat_name, l.price_rate, l.winner_id, l.active,
+                UNIX_TIMESTAMP(l.data_finish) data_finish
+            FROM bids b
+            JOIN lots l ON l.id = b.lot_id
+            JOIN categories c ON c.id = l.category_id
+            WHERE b.user_id = ?
+            GROUP BY b.lot_id';
+
+    return Database::getInstance()->dbQueryAssoc($sql, [$userId], true) ?? [];
+}
+
+
+/**
+ * Список ставок для выбранных лотов
+ * @param array $lots
+ * @return array
+ */
+function getBids(array $lots = []): array
+{
+    if (empty($lots)) {
+        return [];
+    }
+
+    $listId = str_repeat(', ?', count($lots) - 1);
+    $sql = "SELECT id, user_id, lot_id FROM bids
+            WHERE lot_id IN (?{$listId}) AND
+            id IN ( SELECT MAX(id) FROM bids GROUP BY lot_id)";
+
+    return Database::getInstance()->dbQueryAssoc($sql, $lots, true) ?? [];
+}
+
+/**
+ * Список завершенных лотов без победителей
+ * @return array
+ */
+function getFinishedLots(): array
+{
+    $sql = 'SELECT MAX(b.id) as b_id, b.lot_id, l.name as lot_name
+            FROM bids b
+            JOIN lots l ON l.id = b.lot_id
+            WHERE l.active = 1 AND l.winner_id IS NULL AND l.data_finish <= NOW()
+            GROUP BY b.lot_id;';
+
+    return Database::getInstance()->query($sql);
+}
+
+/**
+ * Данные по указанным ставкам пользователя
+ * @param array $bids - список ставок
+ * @return array
+ */
+function getUserSelectedBids(array $bids): array
+{
+    if (empty($bids)) {
+        return [];
+    }
+
+    $listId = str_repeat(', ?', count($bids) - 1);
+    $sql = "SELECT b.id as b_id, b.user_id, u.name as user_name, u.email as user_mail
+            FROM bids b
+            JOIN users u ON b.user_id = u.id
+            WHERE b.id IN (?{$listId})";
+
+    return Database::getInstance()->dbQueryAssoc($sql, array_keys($bids), true) ?? [];
+}
+
 /**
  * Проверка и установка победителя для завершенного лота
  * @param int $lotId
@@ -487,32 +557,29 @@ function checkLotWinner(int $lotId): int
 {
     $sql = 'SELECT user_id FROM bids WHERE id = (SELECT MAX(id) FROM bids WHERE lot_id = ?)';
 
-    $data = dbQueryAssoc($sql, [$lotId]);
+    $data = Database::getInstance()->dbQueryAssoc($sql, [$lotId]);
 
     $winUserId = $data['user_id'] ?? null;
     if ($winUserId) {
-        $sql = 'UPDATE lots SET winner_id = ? WHERE id = ?';
-
-        // проверяем что обновление удалось
-        if (!Database::getInstance()->prepareQuery($sql, [$winUserId, $lotId])) {
-            return false;
-        }
+        setLotWinner($lotId, $winUserId);
     }
 
     return $winUserId;
 }
 
 /**
- * Выполнение запроса и получение результата
- * @param string $sql - запрос
- * @param array  $data - массив парметров подготовленного запроса
- * @param bool $all - возвращать все результаты
- * @return array|mixed
+ * @param int $lotId - id завершенного лота
+ * @param int $winnerId - id пользователя победителя
+ * @return int - результат обновления
  */
-function dbQueryAssoc(string $sql, array $data, bool $all = false)
+function setLotWinner(int $lotId, int $winnerId): int
 {
-    $DB = Database::getInstance();
-    $DB->prepareQuery($sql, $data);
+    $sql = 'UPDATE lots SET winner_id = ? WHERE id = ?';
 
-    return $DB->getAssocResult($all);
+    $res = Database::getInstance()->prepareQuery($sql, [$winnerId, $lotId]);
+
+    if (!$res) {
+        errorLog("SQL:Error UPDATE lots SET winner_id ={$lotId}  WHERE id = {$winnerId}");
+    }
+    return $res;
 }

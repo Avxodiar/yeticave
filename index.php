@@ -1,5 +1,9 @@
 <?php
+
 require_once 'src/init.php';
+
+// Определение ставок у завершенных лотов и рассылка писем победителям (ТЗ п.9.2)
+include_once 'getwinner.php';
 
 use function yeticave\lot\getNewLots;
 
