@@ -6,7 +6,7 @@
         if( $curPage === $i):?>
             <li class="pagination-item pagination-item-active"><a><?=$i?></a></li>
         <?php else: ?>
-            <li class="pagination-item"><a href="<?=$uri.$i?>"><?=$i?></a></li>
+            <li class="pagination-item"><a href="<?=$uri . $sep . 'page=' . $i?>"><?=$i?></a></li>
         <?php endif;
     }
     ?>

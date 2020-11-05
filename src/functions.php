@@ -128,6 +128,7 @@ function pagination(int $pageId, string $uri, int $countElem, bool $hide = false
             'curPage' => $pageId,
             'pageCount' => $pageCount,
             'uri' => $uri,
+            'sep' => strpos($uri, '?') === false ? '?' : '&',
             'backHref' => ($pageId === 1) ? '' : 'href="' . $uri . ($pageId - 1) . '"',
             'forwardHref' => ($pageId < $pageCount) ? 'href="' . $uri . ($pageId + 1) . '"' : '',
         ]
