@@ -9,8 +9,8 @@
 Фреймворки: не используются - условие обучения<br>
 
 Спецификация: [Specification.md](https://github.com/Avxodiar/yeticave/blob/master/Specification.md)<br>
-Детальное задание [tz_detail.pdf](https://github.com/Avxodiar/portfolio/yeticave/blob/master/tz_detail.pdf)<br>
-Тех.задание [tz_yeticave.doc](https://github.com/Avxodiar/portfolio/yeticave/blob/master/tz_yeticave.docx)
+Детальное задание [tz_detail.pdf](https://avxodiar.github.io/portfolio/projects/yeticave/tz_detail.pdf)<br>
+Тех.задание [tz_yeticave.doc](https://avxodiar.github.io/portfolio/projects/yeticave/tz_yeticave.docx)
 
 Примечания:
 1. В соответствии с ТЗ п.6, в корне проекта находится файл queries.sql со схемой БД и примерами запросов на выборку/изменение данных. Более логичным в корне хранить только файл со схемой создания БД и ее структурой, а дополнительное описание с примерами запросов к БД вынести в отдельный файл. А еще правильнее было бы использовать инсталятор (install.php или Makefile), но это уже совсем другая история...
